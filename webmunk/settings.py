@@ -112,6 +112,10 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = True
+
 SILENCED_SYSTEM_CHECKS = ['fields.W904']
 
 from .local_settings import *
