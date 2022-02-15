@@ -1,0 +1,51 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@1.2
+
+workflows:
+  build:
+    jobs:
+      - build
+
+jobs:
+  build:
+    docker:
+      - image: cimg/python:3.8
+      - image: circleci/postgres:9.6.9-postgis
+        auth:
+          username: mydockerhub-user
+          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
+        environment:
+          POSTGRES_USER: root
+          POSTGRES_DB: circle_test
+          POSTGRES_PASSWORD: ""
+    steps:
+      - checkout
+      - restore_cache:
+          key: venv-{{ .Branch }}-{{ checksum "requirements.txt" }}-deps
+      - run:
+          name: Build and validate
+          command: |
+            sudo apt-get update && sudo apt-get install -y gdal-bin
+            git submodule init
+            git submodule update
+            python3 -m venv --copies /home/circleci/venv
+            . /home/circleci/venv/bin/activate
+            pip install -r requirements.txt --progress-bar off
+            cd project
+            cp webmunk/circle_settings.py webmunk/local_settings.py
+            python manage.py migrate
+            python manage.py test
+            cp passive_data_kit/.pylintrc .
+            pylint passive_data_kit
+            bandit -r .      
+      - save_cache:
+          key: venv-{{ .Branch }}-{{ checksum "/home/circleci/project/requirements.txt" }}-deps
+          paths:
+            - "/home/circleci/venv"
+      - store_test_results:
+          path: test-results/
+      - store_artifacts:
+          path: test-reports/
+          destination: python_app
