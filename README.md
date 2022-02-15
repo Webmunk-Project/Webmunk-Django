@@ -1,1 +1,1 @@
-# BU-Extension
+# Webmunk-Django
