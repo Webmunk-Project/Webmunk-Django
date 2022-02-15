@@ -1,0 +1,3 @@
+[submodule "passive_data_kit"]
+	path = passive_data_kit
+	url = https://github.com/audacious-software/PassiveDataKit-Django.git
