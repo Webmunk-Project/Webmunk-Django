@@ -21,6 +21,7 @@ from django.conf.urls import url, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^data/', include('passive_data_kit.urls')),
+    url(r'^data/external/', include('passive_data_kit_external_data.urls')),
 ]
 
 if 'enrollment' in settings.ADDITIONAL_APPS:
