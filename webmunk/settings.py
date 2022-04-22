@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+    'support',
     'passive_data_kit',
     'passive_data_kit_external_data',
 ]
@@ -120,7 +121,13 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_SSL_REDIRECT = True
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = None # 256 * 1024 * 1024
+
 SILENCED_SYSTEM_CHECKS = ['fields.W904']
+
+PDK_EXTRA_GENERATORS = (
+    ('webmunk-visibility-export', 'Webmunk: Element Hide & Show Events',),
+)
 
 from .local_settings import *
 

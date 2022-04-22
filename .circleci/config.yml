@@ -38,6 +38,8 @@ jobs:
             python manage.py test
             cp passive_data_kit/.pylintrc .
             pylint passive_data_kit
+            pylint passive_data_kit_external_data
+            pylint support
             bandit -r .      
       - save_cache:
           key: venv-{{ .Branch }}-{{ checksum "/home/circleci/project/requirements.txt" }}-deps
