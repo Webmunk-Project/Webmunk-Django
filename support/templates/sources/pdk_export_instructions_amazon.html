@@ -1,0 +1,60 @@
+{% load static from staticfiles %}
+<div class="row">
+	<div class="col-5">
+		<h3>The Harvard Webmunk Study</h3>
+		
+		<p>
+			We’d like to ask you to share with us your Amazon order history report, just like you did at the beginning of our study. 
+			The Order History Report allows customers to download shipment, return, and refund activity for Amazon.com orders. 
+			The report is in a "csv" format, which is compatible with Microsoft Excel.
+		</p>
+
+		<p>Please follow the instructions on the right to request your data.</p>
+		
+		<p>
+			Note that you <strong>will not receive the payment</strong> for the study unless this step is completed.
+		</p>
+		
+		<p>
+			If you have trouble downloading and sharing your Amazon order history, please email us at <a href="mailto:webmunk_study@hbs.edu">webmunk_study@hbs.edu</a> and we will help you with additional instructions.
+		</p>
+	</div>
+	<div class="col-7 pb-5">
+		<h3>Instructions</h3>
+
+		<h5 class="mt-5">1. Navigate to Order History Reports.</h5>
+		
+		<p>Visit Amazon's <a href="https://www.amazon.com/gp/b2b/reports" target="_blank">Order History Report</a>. Login if needed.</p>
+		
+		<center>
+			<a href="{% static 'pdk_external/assets/amazon/amazon_request.png' %}" data-toggle="lightbox">
+                <img src="{% static 'pdk_external/assets/amazon/amazon_request.png' %}" class="img-fluid rounded border mb-3" style="width: 66%;" alt="Request Amazon Data">
+            </a>
+		</center>
+
+		<p>For the <strong>Report Type</strong> option, verify that <strong>Items</strong> is selected.</p>
+
+		<p>For the <strong>Start Date</strong> and <strong>End Date</strong> options, select the desired date range to constrain the reporting period.</p>
+				
+		<h5 class="mt-5">2. Request your data.</h5>
+
+		<p>Click the <strong>Request Report</strong> button to begin exporting your order data.</p>
+		
+		<p>
+			Leave the browser window open and monitor the progress of the report creation in the <strong>Your Reports</strong> table.
+			Once the page refreshes when the report is complete, click the <strong>Download</strong> link to retrieve a CSV file of your order history.
+		</p>
+
+		<center>
+			<a href="{% static 'pdk_external/assets/amazon/amazon_download_highlighted.png' %}" data-toggle="lightbox">
+                <img src="{% static 'pdk_external/assets/amazon/amazon_download_highlighted.png' %}" class="img-fluid rounded border mb-3" style="width: 66%;" alt="Request Amazon Data">
+            </a>
+		</center>
+
+		<p>
+			Note that if your report generation is taking an extended amount of time, you may close your browser window, as Amazon will e-mail you a download link to retrieve the CSV file as well.
+		</p>
+
+		<p>Once you have downloaded your file, proceed to the next page to upload your data to the study.</p>
+	</div>
+</div>

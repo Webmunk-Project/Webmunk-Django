@@ -129,6 +129,8 @@ PDK_EXTRA_GENERATORS = (
     ('webmunk-visibility-export', 'Webmunk: Element Hide & Show Events',),
 )
 
+FILE_UPLOAD_PERMISSIONS = 0o666
+
 from .local_settings import *
 
 for app in ADDITIONAL_APPS:
