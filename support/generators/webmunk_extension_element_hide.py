@@ -63,7 +63,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                 query = Q(generator_definition=viz_reference)
 
                 if data_end is not None and data_start is not None:
-                    if (data_end - data_start).days > 1:
+                    if (data_end - data_start).days < 1:
                         data_start = data_end - datetime.timedelta(days=1)
 
                 date_sort = '-created'

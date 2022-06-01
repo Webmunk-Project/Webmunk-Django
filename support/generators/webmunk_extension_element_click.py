@@ -59,7 +59,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                 source_ref = DataSourceReference.reference_for_source(source)
 
                 if data_end is not None and data_start is not None:
-                    if (data_end - data_start).days > 1:
+                    if (data_end - data_start).days < 1:
                         data_start = data_end - datetime.timedelta(days=1)
 
                 date_sort = '-created'
