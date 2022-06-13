@@ -263,8 +263,9 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     log_def = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-log-elements')
     match_def = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-matched-rule')
     scroll_def = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-scroll-position')
+    class_def = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-class-added')
 
-    query = Q(generator_definition=action_def) | Q(generator_definition=click_def) | Q(generator_definition=hide_def) | Q(generator_definition=show_def) | Q(generator_definition=log_def) | Q(generator_definition=match_def) | Q(generator_definition=scroll_def)
+    query = Q(generator_definition=action_def) | Q(generator_definition=click_def) | Q(generator_definition=hide_def) | Q(generator_definition=show_def) | Q(generator_definition=log_def) | Q(generator_definition=match_def) | Q(generator_definition=scroll_def) | Q(generator_definition=class_def)
 
     if 'start_date' in parameters:
         query = query & Q(recorded__gte=parameters['start_date'])
@@ -300,7 +301,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
 
         index += bundle_size
 
-        compressed_str = bz2.compress(json.dumps(bundle))
+        compressed_str = bz2.compress(json.dumps(bundle).encode('utf-8'))
 
         path = os.path.join(backup_staging, filename)
 
