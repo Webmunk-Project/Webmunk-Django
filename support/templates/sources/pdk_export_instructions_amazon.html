@@ -38,7 +38,20 @@
 
 		<p>For the <strong>Report Type</strong> option, verify that <strong>Items</strong> is selected.</p>
 
-		<p>For the <strong>Start Date</strong> select <strong>January 1, 2022</strong>. For <strong>End Date</strong> click the <strong>Use Today</strong>.</p>
+		<p>
+			For the <strong>Start Date</strong> enter 
+			{% if request.session.extras.amazon_start %}
+				<strong>{{ request.session.extras.amazon_start }}</strong>.
+			{% else %}
+				<strong>January 1, 2022</strong>.
+			{% endif %} 
+			For <strong>End Date</strong>  
+			{% if request.session.extras.amazon_end %}
+				enter <strong>{{ request.session.extras.amazon_end }}</strong>.
+			{% else %}
+				click the <strong>Use Today</strong> link.
+			{% endif %}
+		</p>
 				
 		<h5 class="mt-5">2. Request your data.</h5>
 
