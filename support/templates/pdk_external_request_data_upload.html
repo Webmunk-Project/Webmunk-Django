@@ -1,5 +1,6 @@
 {% extends "pdk_external_request_base.html" %}
 {% load static from staticfiles %}
+{% load webmunk_support %}
 
 {% block 'page_title' %}Upload File | Webmunk{% endblock %}
 
@@ -8,21 +9,21 @@
 {% block 'page_navbar_links' %}{% endblock %}
 
 {% block 'page_content' %}
-	{% if message %}
-		{% if message_type %}
-			<div class="row">
-				<div class="col-sm">
-					<div class="alert alert-{{ message_type }}" role="alert">
-					  {{ message }}
-					</div>
-				</div>
-			</div>
-	    {% endif %}
+    {% if message %}
+        {% if message_type %}
+            <div class="row">
+                <div class="col-sm">
+                    <div class="alert alert-{{ message_type }}" role="alert">
+                      {{ message }}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     {% endif %}
     <div class="row">
         <!-- <div class="col-sm">
             <p>
-            	Now please upload your Amazon order history file.
+                Now please upload your Amazon order history file.
             </p>
         </div> -->
         <div class="col-sm">
@@ -30,47 +31,49 @@
                 {% csrf_token %}
                 
                 {% for file in data_request.request_files %}
-					<div class="card mb-3" style="background-color: {% if file.file %}#A5D6A7{% else %}#EEEEEE{% endif %};">
-						<div class="card-body">
-							<h5 class="card-title">Amazon Order History</h5>
-						
-							{% if file.file %}
-								{% with file.file as request_file %}
-									<p class="card-text">
-										Uploaded: <strong>{{ request_file.uploaded }}</strong><br />
-										<!-- Processed: 
-										{% if request_file.processed %}
-											<strong>{{ request_file.processed }}</strong>
-										{% else %}
-											<strong>Pending</strong>
-										{% endif %} -->
-									</p>
+                    <div class="card mb-3" style="background-color: {% if data_request|needs_final_upload %}#EEEEEE{% else %}{% if file.file %}#A5D6A7{% else %}#EEEEEE{% endif %}{% endif %};">
+                        <div class="card-body">
+                            <h5 class="card-title">Amazon Order History</h5>
+                        
+                            {% if file.file %}
+                                {% with file.file as request_file %}
+                                    {% if data_request|needs_final_upload %}
+                                        <p>Please upload your final Amazon order history file.</p>
+                                        <p class="card-text">
+                                            <input type="file" name="{{ file.identifier }}" data-extension="{{ file.extension }}" multiple />
+                                        </p>
+                                    {% else %}
+                                        <p class="card-text">
+                                            Uploaded: <strong>{{ request_file.uploaded }}</strong><br />
+                                        </p>
 
-									{% if request_file.processed %}
-							
-									{% else %}
-										<p class="card-text">
-											<input type="file" name="{{ file.identifier }}" data-extension="{{ file.extension }}" multiple />
-										</p>
-									{% endif %}
-								{% endwith %}
-							{% else %}
-								<p>Now please upload your Amazon order history file.</p>
-								<p class="card-text">
-									<input type="file" name="{{ file.identifier }}" data-extension="{{ file.extension }}" multiple />
-								</p>
-							{% endif %}
+                                        {% if request_file.processed %}
+                                            {% if data_request|needs_final_upload %}
+                                            {% endif %}
+                                        {% else %}
+                                            <p class="card-text">
+                                                <input type="file" name="{{ file.identifier }}" data-extension="{{ file.extension }}" multiple />
+                                            </p>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <p>Now please upload your Amazon order history file.</p>
+                                <p class="card-text">
+                                    <input type="file" name="{{ file.identifier }}" data-extension="{{ file.extension }}" multiple />
+                                </p>
+                            {% endif %}
 
-						    <a href="{% url 'pdk_external_request_data_help' file.identifier %}?token={{ data_request.token }}" class="card-link" target="_blank" rel="noopener noreferrer">Back to Instructions</a>
-						</div>
-                	</div>
-				{% endfor %}
+                            <a href="{% url 'pdk_external_request_data_help' file.identifier %}?token={{ data_request.token }}" class="card-link" target="_blank" rel="noopener noreferrer">Back to Instructions</a>
+                        </div>
+                    </div>
+                {% endfor %}
                 <button type="submit" class="btn btn-primary float-right">Upload</button>
             </form>
         </div>
     </div>
 {% endblock %}
 
-{% block 'js_init' %}		
-	<script data-main="{% static 'pdk_external/upload.js' %}" src="{% static 'pdk_external/lib/require.js' %}"></script>
+{% block 'js_init' %}       
+    <script data-main="{% static 'pdk_external/upload.js' %}" src="{% static 'pdk_external/lib/require.js' %}"></script>
 {% endblock %}

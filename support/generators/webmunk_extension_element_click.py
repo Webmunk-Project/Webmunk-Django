@@ -51,6 +51,10 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
         click_reference = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-element-click')
 
         for source in sorted(sources): # pylint: disable=too-many-nested-blocks
+            # print('Source: %s' % (source))
+
+            gc.collect()
+
             data_source = DataSource.objects.filter(identifier=source).first()
 
             if data_source is not None and data_source.server is None:
@@ -86,10 +90,12 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                 points_count = points.count()
 
-                page_index = 0
+                points_index = 0
 
-                while page_index < points_count:
-                    for point in points[page_index:(page_index + 100)]:
+                while points_index < points_count:
+                    # print('  Index: %d / %d' % (points_index, points_count))
+
+                    for point in points[points_index:(points_index + 100)]:
                         properties = point.fetch_properties()
 
                         row = []
@@ -130,6 +136,6 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                         writer.writerow(row)
 
-                    page_index += 100
+                    points_index += 100
 
     return filename
