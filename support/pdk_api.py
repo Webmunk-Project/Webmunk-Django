@@ -4,6 +4,7 @@ import bz2
 import csv
 import datetime
 import gc
+import io
 import json
 import importlib
 import os
@@ -54,7 +55,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
             show_reference = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-element-hide')
             hide_reference = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-element-show')
 
-            with open(filename, 'w', encoding='utf-8') as outfile:
+            with io.open(filename, 'w', encoding='utf-8') as outfile:
                 writer = csv.writer(outfile, delimiter='\t')
 
                 columns = [
@@ -112,51 +113,64 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                         points = points.order_by(date_sort)
 
-                        for point in points:
-                            properties = point.fetch_properties()
+                        point_count = points.count()
 
-                            row = []
+                        points_index = 0
 
-                            row.append(point.source)
+                        while points_index < point_count:
+                            for point in points[points_index:(points_index + 100)]:
+                                properties = point.fetch_properties()
 
-                            tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
+                                row = []
 
-                            here_tz = pytz.timezone(tz_str)
+                                row.append(point.source)
 
-                            created = point.created.astimezone(here_tz)
-                            recorded = point.recorded.astimezone(here_tz)
+                                tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
 
-                            row.append(created.isoformat())
-                            row.append(recorded.isoformat())
+                                here_tz = pytz.timezone(tz_str)
 
-                            row.append(tz_str)
+                                created = point.created.astimezone(here_tz)
+                                recorded = point.recorded.astimezone(here_tz)
 
-                            row.append(properties.get('tab-id', ''))
+                                row.append(created.isoformat())
+                                row.append(recorded.isoformat())
 
-                            here_tz = pytz.timezone(tz_str)
+                                row.append(tz_str)
 
-                            if point.generator_identifier == 'webmunk-extension-element-show':
-                                row.append(1)
-                            else:
-                                row.append(0)
+                                row.append(properties.get('tab-id', ''))
 
-                            row.append(properties.get('element-class', ''))
+                                here_tz = pytz.timezone(tz_str)
 
-                            offset = properties.get('offset', {})
+                                if point.generator_identifier == 'webmunk-extension-element-show':
+                                    row.append(1)
+                                else:
+                                    row.append(0)
 
-                            row.append(offset.get('top', ''))
-                            row.append(offset.get('left', ''))
+                                row.append(properties.get('element-class', ''))
 
-                            size = properties.get('size', {})
+                                offset = properties.get('offset', {})
 
-                            row.append(size.get('width', ''))
-                            row.append(size.get('height', ''))
+                                row.append(offset.get('top', ''))
+                                row.append(offset.get('left', ''))
 
-                            row.append(properties.get('url!', ''))
-                            row.append(properties.get('page-title!', ''))
-                            row.append(remove_newlines(properties.get('element-content!', '')))
+                                size = properties.get('size', {})
 
-                            writer.writerow(row)
+                                row.append(size.get('width', ''))
+                                row.append(size.get('height', ''))
+
+                                row.append(properties.get('url!', ''))
+                                row.append(properties.get('page-title!', ''))
+
+                                content = properties.get('element-content!', '')
+
+                                row.append(remove_newlines(content))
+
+                                writer.writerow(row)
+                                outfile.flush()
+
+                            points_index += 100
+
+                            outfile.flush()
 
             return filename
     except: # pylint: disable=bare-except

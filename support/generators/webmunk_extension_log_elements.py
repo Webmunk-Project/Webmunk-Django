@@ -28,7 +28,7 @@ def generator_name(identifier): # pylint: disable=unused-argument
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
 
-    zip_filename = tempfile.gettempdir() + os.path.sep + 'pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
+    zip_filename = tempfile.gettempdir() + os.path.sep + 'webmunk_log_elements_' + str(now.timestamp()) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(zip_filename, 'w', allowZip64=True) as export_file:
         for source in sorted(sources): # pylint: disable=too-many-nested-blocks
@@ -99,7 +99,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     while points_index < point_count:
                         # print('  Index: %d / %d' % (points_index, point_count))
 
-                        for point in points[points_index:(points_index + 500)]:
+                        for point in points[points_index:(points_index + 100)]:
                             properties = point.fetch_properties()
 
                             for pattern in properties.get('pattern-matches', {}).keys():
@@ -141,12 +141,16 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                                         row.append(remove_newlines(pattern_match.get('element-content!', '')))
 
                                         writer.writerow(row)
+                                        outfile.flush()
+
                                     except TypeError:
                                         pass
                                     except AttributeError:
                                         pass
 
-                        points_index += 500
+                        points_index += 100
+
+                        outfile.flush()
 
                 export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source) + '.txt')
 
