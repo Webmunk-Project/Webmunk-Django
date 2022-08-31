@@ -279,7 +279,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     scroll_def = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-scroll-position')
     class_def = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-class-added')
 
-    query = Q(generator_definition=action_def) | Q(generator_definition=click_def) | Q(generator_definition=hide_def) | Q(generator_definition=show_def) | Q(generator_definition=log_def) | Q(generator_definition=match_def) | Q(generator_definition=scroll_def) | Q(generator_definition=class_def)
+    query = Q(generator_definition=action_def) | Q(generator_definition=click_def) | Q(generator_definition=hide_def) | Q(generator_definition=show_def) | Q(generator_definition=log_def) | Q(generator_definition=match_def) | Q(generator_definition=scroll_def) | Q(generator_definition=class_def) # pylint: disable=unsupported-binary-operation
 
     if 'start_date' in parameters:
         query = query & Q(recorded__gte=parameters['start_date'])
