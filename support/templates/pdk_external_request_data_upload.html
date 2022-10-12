@@ -44,17 +44,18 @@
                                         </p>
                                     {% else %}
                                         <p class="card-text">
-                                            Uploaded: <strong>{{ request_file.uploaded }}</strong><br />
+                                            Last Upload: <strong>{{ request_file.uploaded }}</strong><br />
                                         </p>
-
-                                        {% if request_file.processed %}
-                                            {% if data_request|needs_final_upload %}
-                                            {% endif %}
-                                        {% else %}
-                                            <p class="card-text">
-                                                <input type="file" name="{{ file.identifier }}" data-extension="{{ file.extension }}" multiple />
-                                            </p>
-                                        {% endif %}
+                                        
+                                        <!-- 
+											{% if request_file.processed %}
+												
+											{% else %}
+												<p class="card-text">
+													<input type="file" name="{{ file.identifier }}" data-extension="{{ file.extension }}" multiple />
+												</p>
+											{% endif %}
+										-->
                                     {% endif %}
                                 {% endwith %}
                             {% else %}
@@ -68,7 +69,9 @@
                         </div>
                     </div>
                 {% endfor %}
-                <button type="submit" class="btn btn-primary float-right">Upload</button>
+                {% if data_request|still_needs_uploads %}
+	                <button type="submit" class="btn btn-primary float-right">Upload</button>
+	            {% endif %}
             </form>
         </div>
     </div>
