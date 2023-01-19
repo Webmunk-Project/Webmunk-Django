@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-member,line-too-long
 
+import datetime
 import logging
 import json
 import time
@@ -22,7 +23,7 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(o, numpy.ndarray):
             return o.tolist()
 
-        if isinstance(o):
+        if isinstance(o, datetime.datetime):
             return o.isoformat()
 
         if isinstance(o, pandas.DataFrame):
