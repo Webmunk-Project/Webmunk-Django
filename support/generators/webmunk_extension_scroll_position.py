@@ -101,8 +101,8 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     row.append(properties.get('left', ''))
                     row.append(properties.get('width', ''))
                     row.append(properties.get('height', ''))
-                    row.append(properties.get('url!', ''))
-                    row.append(properties.get('page-title!', ''))
+                    row.append(properties.get('url*', properties.get('url!', '')))
+                    row.append(properties.get('page-title*', properties.get('page-title!', '')))
 
                     writer.writerow(row)
 

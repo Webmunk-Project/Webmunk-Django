@@ -21,6 +21,12 @@ class Command(BaseCommand):
                             dest='date',
                             help='Date of app usage in YYY-MM-DD format')
 
+        parser.add_argument('--priority',
+                            type=int,
+                            dest='priority',
+                            help='Job export priority')
+
+
     @handle_lock
     def handle(self, *args, **options): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         now = timezone.now()
@@ -61,5 +67,9 @@ class Command(BaseCommand):
         parameters['date_type'] = 'recorded'
         parameters['path'] = yesterday.strftime('%Y-%m-%d/')
 
-        request = ReportJobBatchRequest(requester=requester, requested=now, parameters=parameters)
-        request.save()
+        priority = options.get('priority', 0)
+
+        if priority is None:
+            priority = 0
+
+        ReportJobBatchRequest.objects.create(requester=requester, requested=now, parameters=parameters, priority=priority)

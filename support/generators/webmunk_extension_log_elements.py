@@ -125,8 +125,8 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                                         here_tz = pytz.timezone(tz_str)
 
-                                        row.append(properties.get('url!', ''))
-                                        row.append(properties.get('page-title!', ''))
+                                        row.append(properties.get('url*', ''))
+                                        row.append(properties.get('page-title*', properties.get('page-title!', '')))
 
                                         row.append(pattern)
 
@@ -138,7 +138,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                                         row.append(size.get('width', ''))
                                         row.append(size.get('height', ''))
 
-                                        row.append(remove_newlines(pattern_match.get('element-content!', '')))
+                                        row.append(remove_newlines(pattern_match.get('element-content*', properties.get('element-content!', ''))))
 
                                         writer.writerow(row)
                                         outfile.flush()

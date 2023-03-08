@@ -130,9 +130,9 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                         row.append(size.get('width', ''))
                         row.append(size.get('height', ''))
 
-                        row.append(properties.get('url!', ''))
-                        row.append(properties.get('page-title!', ''))
-                        row.append(remove_newlines(properties.get('element-content!', '')))
+                        row.append(properties.get('url*', ''))
+                        row.append(properties.get('page-title*', properties.get('page-title!', '')))
+                        row.append(remove_newlines(properties.get('element-content*', properties.get('element-content!', ''))))
 
                         writer.writerow(row)
 

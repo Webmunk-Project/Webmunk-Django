@@ -62,43 +62,44 @@ class Command(BaseCommand):
         for asin_item in AmazonASINItem.objects.filter(metadata=None).order_by('updated')[:250]: # pylint: disable=too-many-nested-blocks
             metadata = {}
 
-            try:
-                products = api.query(asin_item.asin, progress_bar=False)
+            if len(asin_item.asin) <= 10:
+                time.sleep(settings.KEEPA_API_SLEEP_SECONDS)
 
-                # print('%s: %s' % (asin_item.asin, json.dumps(products, indent=2, cls=NumpyEncoder)))
+                try:
+                    products = api.query(asin_item.asin, progress_bar=False)
 
-                if len(products) > 0 and products[0] is not None:
-                    product = products[0]
+                    # print('%s: %s' % (asin_item.asin, json.dumps(products, indent=2, cls=NumpyEncoder)))
 
-                    if product['title'] is not None:
-                        asin_item.name = product['title']
+                    if len(products) > 0 and products[0] is not None:
+                        product = products[0]
 
-                        category = ''
+                        if product['title'] is not None:
+                            asin_item.name = product['title']
 
-                        if product.get('categoryTree', None) is not None:
-                            for category_item in product.get('categoryTree', []):
-                                if category != '':
-                                    category = category + ' > '
+                            category = ''
 
-                                category = category + category_item['name']
+                            if product.get('categoryTree', None) is not None:
+                                for category_item in product.get('categoryTree', []):
+                                    if category != '':
+                                        category = category + ' > '
 
-                            asin_item.category = category
+                                    category = category + category_item['name']
 
-                            print('FOUND: %s - %s / %s' % (asin_item.asin, asin_item.name, asin_item.category))
+                                asin_item.category = category
 
-                        metadata['keepa'] = products
+                                print('FOUND: %s - %s / %s' % (asin_item.asin, asin_item.name, asin_item.category))
+
+                            metadata['keepa'] = products
+                        else:
+                            print('NULL ITEM: %s' % asin_item.asin)
+                            metadata['keepa'] = 'Null item'
                     else:
-                        print('NULL ITEM: %s' % asin_item.asin)
-                        metadata['keepa'] = 'Null item'
-                else:
-                    print('NOT FOUND: %s' % asin_item.asin)
-                    metadata['keepa'] = 'Not found'
-            except: # pylint: disable=bare-except
-                print('Invalid identifier: %s' % asin_item.asin)
-                metadata['keepa'] = 'Invalid identifier'
+                        print('NOT FOUND: %s' % asin_item.asin)
+                        metadata['keepa'] = 'Not found'
+                except: # pylint: disable=bare-except
+                    print('Invalid identifier: %s' % asin_item.asin)
+                    metadata['keepa'] = 'Invalid identifier'
 
             asin_item.metadata = json.dumps(metadata, indent=2, cls=NumpyEncoder)
             asin_item.updated = timezone.now()
             asin_item.save()
-
-            time.sleep(settings.KEEPA_API_SLEEP_SECONDS)

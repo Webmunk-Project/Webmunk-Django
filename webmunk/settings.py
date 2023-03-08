@@ -127,6 +127,7 @@ SILENCED_SYSTEM_CHECKS = ['fields.W904']
 
 PDK_EXTRA_GENERATORS = (
     ('webmunk-visibility-export', 'Webmunk: Element Hide & Show Events',),
+    ('webmunk-asin-details', 'Webmunk: ASIN Details',),
 )
 
 FILE_UPLOAD_PERMISSIONS = 0o666

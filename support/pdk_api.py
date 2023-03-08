@@ -24,6 +24,7 @@ from django.utils.text import slugify
 
 from passive_data_kit.models import DataPoint, DataSource, DataGeneratorDefinition, DataSourceReference, DataBundle, install_supports_jsonfield
 
+from .models import AmazonASINItem
 
 def remove_newlines(text_block):
     return ''.join(text_block.splitlines())
@@ -158,10 +159,10 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                                 row.append(size.get('width', ''))
                                 row.append(size.get('height', ''))
 
-                                row.append(properties.get('url!', ''))
-                                row.append(properties.get('page-title!', ''))
+                                row.append(properties.get('url!', properties.get('url*', '')))
+                                row.append(properties.get('page-title!', properties.get('page-title*', '')))
 
-                                content = properties.get('element-content!', '')
+                                content = properties.get('element-content!', properties.get('element-content*', ''))
 
                                 row.append(remove_newlines(content))
 
@@ -171,6 +172,60 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                             points_index += 100
 
                             outfile.flush()
+
+            return filename
+
+        if generator == 'webmunk-asin-details':
+            filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
+
+            with io.open(filename, 'w', encoding='utf-8') as outfile:
+                writer = csv.writer(outfile, delimiter='\t')
+
+                columns = [
+                    'ASIN',
+                    'Date Added',
+                    'Date Updated',
+                    'Name',
+                    'Category',
+                ]
+
+                writer.writerow(columns)
+
+                asin_items = AmazonASINItem.objects.all().order_by('pk')
+
+                item_count = asin_items.count()
+                item_index = 0
+
+                here_tz = pytz.timezone(settings.TIME_ZONE)
+
+                while item_index < item_count:
+                    for asin_item in asin_items[item_index:(item_index + 1000)]:
+                        row = []
+
+                        row.append(asin_item.asin)
+
+                        added = asin_item.added.astimezone(here_tz)
+                        updated = asin_item.updated.astimezone(here_tz)
+
+                        row.append(added.isoformat())
+                        row.append(updated.isoformat())
+
+                        if asin_item.name is not None:
+                            row.append(asin_item.name)
+                        else:
+                            row.append('')
+
+                        if asin_item.category is not None:
+                            row.append(asin_item.category)
+                        else:
+                            row.append('')
+
+                        writer.writerow(row)
+                        outfile.flush()
+
+                    item_index += 1000
+
+                    outfile.flush()
 
             return filename
     except: # pylint: disable=bare-except

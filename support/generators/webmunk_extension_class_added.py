@@ -105,12 +105,12 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     here_tz = pytz.timezone(tz_str)
 
-                    row.append(properties.get('url!', ''))
-                    row.append(properties.get('page-title!', ''))
+                    row.append(properties.get('url*', properties.get('url!', '')))
+                    row.append(properties.get('page-title*', properties.get('page-title!', '')))
 
                     row.append(properties.get('class-name', ''))
 
-                    row.append(remove_newlines(properties.get('element-content!', '')))
+                    row.append(remove_newlines(properties.get('element-content*', properties.get('element-content!', ''))))
 
                     writer.writerow(row)
 
