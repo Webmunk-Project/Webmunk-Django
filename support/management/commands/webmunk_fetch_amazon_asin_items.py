@@ -8,6 +8,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.utils import timezone
 
+from passive_data_kit.decorators import handle_lock
 from passive_data_kit.models import DataPoint
 
 from ...models import AmazonASINItem
@@ -18,6 +19,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         pass
 
+    @handle_lock
     def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-locals
         query = None
 
