@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+    'prettyjson',
     'support',
     'passive_data_kit',
     'passive_data_kit_external_data',

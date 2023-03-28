@@ -1,5 +1,6 @@
 keepa==1.3.5
-pyOpenSSL==23.0.0 
+pyOpenSSL==23.1.1
 selenium==4.7.2
+simplejson==3.18.4
 -r passive_data_kit/requirements.txt
 -r passive_data_kit_external_data/requirements.txt
