@@ -54,6 +54,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                         'Date Recorded',
                         'Time Zone',
                         'Tab ID',
+                        'Page ID',
                         'URL',
                         'Page Title',
                         'Pattern',
@@ -122,6 +123,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                                         row.append(tz_str)
 
                                         row.append(properties.get('tab-id', ''))
+                                        row.append(properties.get('page-id', ''))
 
                                         here_tz = pytz.timezone(tz_str)
 

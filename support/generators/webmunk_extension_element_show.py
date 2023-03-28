@@ -39,6 +39,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
             'Date Recorded',
             'Time Zone',
             'Tab ID',
+            'Page ID',
             'Visible',
             'Element Class',
             'Top',
@@ -110,6 +111,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     here_tz = pytz.timezone(tz_str)
 
                     row.append(properties.get('tab-id', ''))
+                    row.append(properties.get('page-id', ''))
 
                     if point.generator_identifier == 'webmunk-extension-element-show':
                         row.append(1)

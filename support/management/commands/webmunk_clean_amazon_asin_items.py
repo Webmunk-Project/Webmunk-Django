@@ -78,6 +78,51 @@ class Command(BaseCommand):
         for class_item in to_delete:
             class_item.delete()
 
+        # ---
+
+        class_items = AmazonASINItem.objects.filter(asin__icontains='#')
+
+        print('Remaining: %s' % class_items.count())
+
+        to_delete = []
+
+        for class_item in class_items[:2500]:
+            tokens = class_item.asin.split('#')
+
+            asin_value = tokens[0]
+
+            if len(asin_value) == 10:
+                if AmazonASINItem.objects.filter(asin__iexact=asin_value).count() > 0:
+                    to_delete.append(class_item)
+                    print('Deleting %s' % class_item.asin)
+                else:
+                    class_item.asin = asin_value
+                    class_item.metadata = None
+                    class_item.save()
+                    print('Updating %s' % class_item.asin)
+            else:
+                print('Skipping %s' % class_item.asin)
+
+        for class_item in to_delete:
+            class_item.delete()
+
+        # ---
+
+        class_items = AmazonASINItem.objects.filter(asin='')
+
+        print('Remaining: %s' % class_items.count())
+
+        to_delete = []
+
+        for class_item in class_items[:2500]:
+            to_delete.append(class_item)
+            print('Deleting %s' % class_item.asin)
+
+        for class_item in to_delete:
+            class_item.delete()
+
+        # ---
+
         class_items = AmazonASINItem.objects.filter(asin__icontains='&quot;')
 
         print('Remaining: %s' % class_items.count())

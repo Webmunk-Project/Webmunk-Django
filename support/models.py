@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 class AmazonASINItem(models.Model):
     class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value, useless-object-inheritance
@@ -16,3 +17,6 @@ class AmazonASINItem(models.Model):
 
     def __str__(self):
         return str(self.asin)
+
+    def get_absolute_url(self):
+        return reverse('asin_json', kwargs={'asin': self.asin})

@@ -87,7 +87,7 @@ class Command(BaseCommand):
 
                                 asin_item.category = category
 
-                                print('FOUND: %s - %s / %s' % (asin_item.asin, asin_item.name, asin_item.category))
+                                # print('FOUND: %s - %s / %s' % (asin_item.asin, asin_item.name, asin_item.category))
 
                             metadata['keepa'] = products
                         else:
@@ -100,6 +100,10 @@ class Command(BaseCommand):
                     print('Invalid identifier: %s' % asin_item.asin)
                     metadata['keepa'] = 'Invalid identifier'
 
-            asin_item.metadata = json.dumps(metadata, indent=2, cls=NumpyEncoder)
+            try:
+                asin_item.metadata = json.dumps(metadata, indent=2, cls=NumpyEncoder)
+            except ValueError:
+                pass # Pandas issue
+
             asin_item.updated = timezone.now()
             asin_item.save()

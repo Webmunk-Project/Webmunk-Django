@@ -65,6 +65,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     'Date Recorded',
                     'Time Zone',
                     'Tab ID',
+                    'Page ID',
                     'Visible',
                     'Element Class',
                     'Top',
@@ -139,6 +140,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                                 row.append(tz_str)
 
                                 row.append(properties.get('tab-id', ''))
+                                row.append(properties.get('page-id', ''))
 
                                 here_tz = pytz.timezone(tz_str)
 
@@ -187,6 +189,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     'Date Updated',
                     'Name',
                     'Category',
+                    'Data URL',
                 ]
 
                 writer.writerow(columns)
@@ -219,6 +222,8 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                             row.append(asin_item.category)
                         else:
                             row.append('')
+
+                        row.append('https://%s%s' % (settings.ALLOWED_HOSTS[0], asin_item.get_absolute_url()))
 
                         writer.writerow(row)
                         outfile.flush()

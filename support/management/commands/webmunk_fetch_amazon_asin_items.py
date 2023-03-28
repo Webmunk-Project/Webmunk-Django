@@ -90,7 +90,7 @@ class Command(BaseCommand):
                 last_created = point.created
 
         if last_created is not None:
-            print('SINCE: %s - %d - %d' % (latest_asin_item.added.isoformat(), DataPoint.objects.filter(query).count(), seconds_window))
+            # print('SINCE: %s - %d - %d' % (latest_asin_item.added.isoformat(), DataPoint.objects.filter(query).count(), seconds_window))
 
             AmazonASINItem.objects.filter(asin__startswith='20', asin__contains='T').filter(asin__contains=':').filter(asin__contains='+').delete()
 
