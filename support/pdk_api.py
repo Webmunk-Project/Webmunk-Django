@@ -223,7 +223,10 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                         else:
                             row.append('')
 
-                        row.append('https://%s%s' % (settings.ALLOWED_HOSTS[0], asin_item.get_absolute_url()))
+                        if asin_item.asin is not None and asin_item.asin != '':
+                            row.append('https://%s%s' % (settings.ALLOWED_HOSTS[0], asin_item.get_absolute_url()))
+                        else:
+                            row.append('(No URL - missing ASIN)')
 
                         writer.writerow(row)
                         outfile.flush()
