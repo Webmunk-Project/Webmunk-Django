@@ -20,7 +20,7 @@ def extract_secondary_identifier(properties):
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Webmunk: Amazon Order Items'
 
-def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-statements
     filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
 
     with io.open(filename, 'w', encoding='utf-8') as outfile:
