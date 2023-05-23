@@ -13,7 +13,7 @@ from passive_data_kit.decorators import handle_lock
 from passive_data_kit.models import ReportJobBatchRequest, DataSource
 
 class Command(BaseCommand):
-    help = 'Creates a nightly job to upload data to Dropbox.'
+    help = 'Creates a nightly job to upload data to the cloud.'
 
     def add_arguments(self, parser):
         parser.add_argument('--date',
@@ -59,6 +59,7 @@ class Command(BaseCommand):
             'webmunk-extension-scroll-position',
             'webmunk-visibility-export',
             'webmunk-extension-action',
+            'webmunk-amazon-order',
         ]
 
         parameters['export_raw'] = False

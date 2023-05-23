@@ -33,14 +33,14 @@ class Command(BaseCommand):
 
                 window_end = latest_asin_item.added + datetime.timedelta(seconds=seconds_window)
 
-                query = Q(secondary_identifier='webmunk-asin-item')
+                query = Q(secondary_identifier='webmunk-asin-item') | Q(generator_identifier='webmunk-amazon-order')
                 query = query & Q(created__gt=latest_asin_item.added)
                 query = query & Q(created__lte=window_end)
 
                 if window_end > timezone.now():
                     break
         else:
-            query = Q(secondary_identifier='webmunk-asin-item')
+            query = Q(secondary_identifier='webmunk-asin-item') | Q(generator_identifier='webmunk-amazon-order')
 
         last_created = None
 
@@ -49,33 +49,43 @@ class Command(BaseCommand):
 
             props = point.fetch_properties()
 
-            page_url = props.get('url!', props.get('url*', None))
+            if point.generator_identifier == 'webmunk-amazon-order':
+                for item in props.get('items', []):
+                    item_asin = item.get('asin', None)
 
-            if page_url is not None and '/dp/' in page_url:
-                matches = re.findall('.*/dp/(.+?)/.*', page_url)
+                    if item_asin is not None and (item_asin in asins) is False:
+                        # print('ADDED FROM ORDER: %s' % item_asin)
+                        asins.append(item_asin)
 
-                for matched_item in matches:
-                    if ('?' in matched_item) is False and (matched_item in asins) is False:
-                        # print('ADDED FROM URL: %s' % matched_item)
+            else:
+                props = point.fetch_properties()
 
-                        asins.append(matched_item)
+                page_url = props.get('url!', props.get('url*', None))
 
-            element = props.get('element-content!', props.get('element-content*', None))
+                if page_url is not None and '/dp/' in page_url:
+                    matches = re.findall('.*/dp/(.+?)/.*', page_url)
 
-            if element is not None:
-                matches = re.findall('.*/dp/(.+?)/.*', element)
+                    for matched_item in matches:
+                        if ('?' in matched_item) is False and (matched_item in asins) is False:
+                            # print('ADDED FROM URL: %s' % matched_item)
+                            asins.append(matched_item)
 
-                for matched_item in matches:
-                    if ('?' in matched_item) is False and (matched_item in asins) is False:
-                        # print('ADDED FROM ELEMENT URL: %s' % matched_item)
-                        asins.append(matched_item)
+                element = props.get('element-content!', props.get('element-content*', None))
 
-                matches = re.findall('data-asin="(.+?)"', element)
+                if element is not None:
+                    matches = re.findall('.*/dp/(.+?)/.*', element)
 
-                for matched_item in matches:
-                    if (matched_item in asins) is False:
-                        # print('ADDED FROM ELEMENT DATA-ASIN: %s' % matched_item)
-                        asins.append(matched_item)
+                    for matched_item in matches:
+                        if ('?' in matched_item) is False and (matched_item in asins) is False:
+                            # print('ADDED FROM ELEMENT URL: %s' % matched_item)
+                            asins.append(matched_item)
+
+                    matches = re.findall('data-asin="(.+?)"', element)
+
+                    for matched_item in matches:
+                        if (matched_item in asins) is False:
+                            # print('ADDED FROM ELEMENT DATA-ASIN: %s' % matched_item)
+                            asins.append(matched_item)
 
             for asin in asins:
                 if '"' in asin:
