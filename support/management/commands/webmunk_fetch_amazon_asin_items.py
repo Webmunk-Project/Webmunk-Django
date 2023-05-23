@@ -40,11 +40,11 @@ class Command(BaseCommand):
                 if window_end > timezone.now():
                     break
         else:
-            query = Q(secondary_identifier='webmunk-asin-item').order_by('created')[:250]
+            query = Q(secondary_identifier='webmunk-asin-item')
 
         last_created = None
 
-        for point in DataPoint.objects.filter(query):
+        for point in DataPoint.objects.filter(query).order_by('created')[:250]:
             asins = []
 
             props = point.fetch_properties()
