@@ -46,6 +46,8 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
             'Order Tax',
             'Order Shipping',
             'Order Total',
+            'Destination',
+            'Delivery Date',
         ]
 
         writer.writerow(columns)
@@ -125,6 +127,8 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                         row.append(properties.get('order-tax', properties.get('order-Tax', '')))
                         row.append(properties.get('order-shipping', ''))
                         row.append(properties.get('order-total', ''))
+                        row.append(properties.get('"order-destination', ''))
+                        row.append(properties.get('order-delivered', ''))
 
                         writer.writerow(row)
 
