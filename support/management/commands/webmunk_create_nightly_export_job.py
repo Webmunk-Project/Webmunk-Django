@@ -5,6 +5,7 @@ import datetime
 
 import arrow
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -19,7 +20,7 @@ class Command(BaseCommand):
         parser.add_argument('--date',
                             type=str,
                             dest='date',
-                            help='Date of app usage in YYY-MM-DD format')
+                            help='Date of app usage in YYYY-MM-DD format')
 
         parser.add_argument('--priority',
                             type=int,
@@ -67,6 +68,17 @@ class Command(BaseCommand):
         parameters['data_end'] = yesterday.strftime('%m/%d/%Y')
         parameters['date_type'] = 'recorded'
         parameters['path'] = yesterday.strftime('%Y-%m-%d/')
+
+        source_range = ''
+
+        if len(active_users) == 1:
+            source_range = active_users[0]
+        elif len(active_users) >= 2:
+            source_range = '%s.%s' % (active_users[0], active_users[-1])
+
+        prefix = ('%s_%s_%s' % (settings.ALLOWED_HOSTS[0], yesterday.isoformat(), source_range))
+
+        parameters['prefix'] = prefix
 
         priority = options.get('priority', 0)
 
