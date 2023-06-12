@@ -61,6 +61,7 @@ class Command(BaseCommand):
             'webmunk-visibility-export',
             'webmunk-extension-action',
             'webmunk-amazon-order',
+            'webmunk-local-tasks',
         ]
 
         parameters['export_raw'] = False

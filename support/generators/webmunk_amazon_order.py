@@ -15,7 +15,7 @@ from passive_data_kit.models import DataPoint, DataSource, DataGeneratorDefiniti
 
 
 def extract_secondary_identifier(properties):
-    return properties.get('111-5181787-4027412', None)
+    return properties.get('order-number', None)
 
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Webmunk: Amazon Order Items'
