@@ -87,53 +87,63 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     date_sort = '-recorded'
 
+                points_count = points.count()
+
                 points = points.order_by(date_sort)
 
-                for point in points:
-                    properties = point.fetch_properties()
+                points_index = 0
 
-                    row = []
+                while points_index < points_count:
+                    for point in points[points_index:(points_index + 10000)]:
+                        properties = point.fetch_properties()
 
-                    row.append(point.source)
+                        row = []
 
-                    tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
+                        row.append(point.source)
 
-                    here_tz = pytz.timezone(tz_str)
+                        tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
 
-                    created = point.created.astimezone(here_tz)
-                    recorded = point.recorded.astimezone(here_tz)
+                        here_tz = pytz.timezone(tz_str)
 
-                    row.append(created.isoformat())
-                    row.append(recorded.isoformat())
+                        created = point.created.astimezone(here_tz)
+                        recorded = point.recorded.astimezone(here_tz)
 
-                    row.append(tz_str)
+                        row.append(created.isoformat())
+                        row.append(recorded.isoformat())
 
-                    here_tz = pytz.timezone(tz_str)
+                        row.append(tz_str)
 
-                    row.append(properties.get('tab-id', ''))
-                    row.append(properties.get('page-id', ''))
+                        here_tz = pytz.timezone(tz_str)
 
-                    if point.generator_identifier == 'webmunk-extension-element-show':
-                        row.append(1)
-                    else:
-                        row.append(0)
+                        row.append(properties.get('tab-id', ''))
+                        row.append(properties.get('page-id', ''))
 
-                    row.append(properties.get('element-class', ''))
+                        if point.generator_identifier == 'webmunk-extension-element-show':
+                            row.append(1)
+                        else:
+                            row.append(0)
 
-                    offset = properties.get('offset', {})
+                        row.append(properties.get('element-class', ''))
 
-                    row.append(offset.get('top', ''))
-                    row.append(offset.get('left', ''))
+                        offset = properties.get('offset', {})
 
-                    size = properties.get('size', {})
+                        row.append(offset.get('top', ''))
+                        row.append(offset.get('left', ''))
 
-                    row.append(size.get('width', ''))
-                    row.append(size.get('height', ''))
+                        size = properties.get('size', {})
 
-                    row.append(properties.get('url*', properties.get('url!', '')))
-                    row.append(properties.get('page-title*', properties.get('page-title!', '')))
-                    row.append(remove_newlines(properties.get('element-content*', properties.get('element-content!', ''))))
+                        row.append(size.get('width', ''))
+                        row.append(size.get('height', ''))
 
-                    writer.writerow(row)
+                        row.append(properties.get('url*', properties.get('url!', '')))
+                        row.append(properties.get('page-title*', properties.get('page-title!', '')))
+                        row.append(remove_newlines(properties.get('element-content*', properties.get('element-content!', ''))))
+
+                        writer.writerow(row)
+
+                    points_index += 10000
+
+                    outfile.flush()
+
 
     return filename

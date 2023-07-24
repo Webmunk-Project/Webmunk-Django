@@ -24,7 +24,7 @@ def extract_secondary_identifier(properties):
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Webmunk: Class Added Event'
 
-def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-statements
     filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
 
     with io.open(filename, 'w', encoding='utf-8') as outfile:
@@ -81,39 +81,48 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                 points = points.order_by(date_sort)
 
-                for point in points:
-                    properties = point.fetch_properties()
+                points_count = points.count()
 
-                    row = []
+                points_index = 0
 
-                    row.append(point.source)
+                while points_index < points_count:
+                    for point in points[points_index:(points_index + 10000)]:
+                        properties = point.fetch_properties()
 
-                    tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
+                        row = []
 
-                    here_tz = pytz.timezone(tz_str)
+                        row.append(point.source)
 
-                    created = point.created.astimezone(here_tz)
-                    recorded = point.recorded.astimezone(here_tz)
+                        tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
 
-                    row.append(created.isoformat())
-                    row.append(recorded.isoformat())
+                        here_tz = pytz.timezone(tz_str)
 
-                    row.append(tz_str)
+                        created = point.created.astimezone(here_tz)
+                        recorded = point.recorded.astimezone(here_tz)
 
-                    here_tz = pytz.timezone(tz_str)
+                        row.append(created.isoformat())
+                        row.append(recorded.isoformat())
 
-                    row.append(properties.get('tab-id', ''))
-                    row.append(properties.get('page-id', ''))
+                        row.append(tz_str)
 
-                    here_tz = pytz.timezone(tz_str)
+                        here_tz = pytz.timezone(tz_str)
 
-                    row.append(properties.get('url*', properties.get('url!', '')))
-                    row.append(properties.get('page-title*', properties.get('page-title!', '')))
+                        row.append(properties.get('tab-id', ''))
+                        row.append(properties.get('page-id', ''))
 
-                    row.append(properties.get('class-name', ''))
+                        here_tz = pytz.timezone(tz_str)
 
-                    row.append(remove_newlines(properties.get('element-content*', properties.get('element-content!', ''))))
+                        row.append(properties.get('url*', properties.get('url!', '')))
+                        row.append(properties.get('page-title*', properties.get('page-title!', '')))
 
-                    writer.writerow(row)
+                        row.append(properties.get('class-name', ''))
+
+                        row.append(remove_newlines(properties.get('element-content*', properties.get('element-content!', ''))))
+
+                        writer.writerow(row)
+
+                    points_index += 10000
+
+                    outfile.flush()
 
     return filename

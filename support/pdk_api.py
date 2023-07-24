@@ -27,7 +27,9 @@ from passive_data_kit.models import DataPoint, DataSource, DataGeneratorDefiniti
 from .models import AmazonASINItem
 
 def remove_newlines(text_block):
-    return ''.join(text_block.splitlines())
+    results = ''.join(text_block.splitlines())
+
+    return results
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements, too-many-return-statements
     try:
@@ -115,12 +117,12 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                         points = points.order_by(date_sort)
 
-                        point_count = points.count()
+                        points_count = points.count()
 
                         points_index = 0
 
-                        while points_index < point_count:
-                            for point in points[points_index:(points_index + 100)]:
+                        while points_index < points_count:
+                            for point in points[points_index:(points_index + 10000)]:
                                 properties = point.fetch_properties()
 
                                 row = []
@@ -171,7 +173,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                                 writer.writerow(row)
                                 outfile.flush()
 
-                            points_index += 100
+                            points_index += 10000
 
                             outfile.flush()
 
@@ -390,11 +392,11 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     return to_transmit, to_clear
 
 def clear_points(to_clear):
-    point_count = len(to_clear)
+    points_count = len(to_clear)
 
-    for i in range(0, point_count):
+    for i in range(0, points_count):
         if (i % 1000) == 0:
-            print('[webmunk] Clearing points ' + str(i) + ' of ' + str(point_count) + '...')
+            print('[webmunk] Clearing points ' + str(i) + ' of ' + str(points_count) + '...')
             sys.stdout.flush()
 
         point_id = to_clear[i]

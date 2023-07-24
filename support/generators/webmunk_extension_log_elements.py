@@ -35,8 +35,6 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
             data_source = DataSource.objects.filter(identifier=source).first()
 
             if data_source is not None and data_source.server is None:
-                # print('Source: %s' % (source))
-
                 gc.collect()
 
                 source_ref = DataSourceReference.reference_for_source(source)
@@ -93,14 +91,12 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     points = points.order_by(date_sort)
 
-                    point_count = points.count()
+                    points_count = points.count()
 
                     points_index = 0
 
-                    while points_index < point_count:
-                        # print('  Index: %d / %d' % (points_index, point_count))
-
-                        for point in points[points_index:(points_index + 100)]:
+                    while points_index < points_count:
+                        for point in points[points_index:(points_index + 1000)]:
                             properties = point.fetch_properties()
 
                             for pattern in properties.get('pattern-matches', {}).keys():
@@ -150,7 +146,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                                     except AttributeError:
                                         pass
 
-                        points_index += 100
+                        points_index += 1000
 
                         outfile.flush()
 

@@ -13,13 +13,12 @@ from django.conf import settings
 
 from passive_data_kit.models import DataPoint, DataSource, DataGeneratorDefinition, DataSourceReference
 
+
 def generator_name(identifier): # pylint: disable=unused-argument
-    return 'Webmunk: Page Scrolls'
+    return 'Webmunk: Visible Tasks'
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-statements
     filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
-
-    scroll_reference = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-scroll-position')
 
     with io.open(filename, 'w', encoding='utf-8') as outfile:
         writer = csv.writer(outfile, delimiter='\t')
@@ -27,19 +26,17 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
         columns = [
             'Source',
             'Date Created',
+            'Date Created UTC',
             'Date Recorded',
+            'Date Recorded UTC',
             'Time Zone',
-            'Tab ID',
-            'Page ID',
-            'Top',
-            'Left',
-            'Width',
-            'Height',
-            'URL',
-            'Page Title',
+            'Task Count',
+            'Task Name(s)',
         ]
 
         writer.writerow(columns)
+
+        order_reference = DataGeneratorDefinition.definition_for_identifier('webmunk-local-tasks')
 
         for source in sorted(sources): # pylint: disable=too-many-nested-blocks
             data_source = DataSource.objects.filter(identifier=source).first()
@@ -55,7 +52,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                 date_sort = '-created'
 
-                points = DataPoint.objects.filter(source_reference=source_ref, generator_definition=scroll_reference)
+                points = DataPoint.objects.filter(source_reference=source_ref, generator_definition=order_reference)
 
                 if date_type == 'created':
                     if data_start is not None:
@@ -73,48 +70,39 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     date_sort = '-recorded'
 
-                points_count = points.count()
-
                 points = points.order_by(date_sort)
 
-                points_index = 0
+                for point in points:
+                    row = []
 
-                while points_index < points_count:
-                    for point in points[points_index:(points_index + 10000)]:
-                        properties = point.fetch_properties()
+                    properties = point.fetch_properties()
 
-                        row = []
+                    tasks = []
 
-                        row.append(point.source)
+                    for task in properties.get('pending-tasks', []):
+                        tasks.append(task.get('message', ''))
 
-                        tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
+                    row.append(point.source)
 
-                        here_tz = pytz.timezone(tz_str)
+                    tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
 
-                        created = point.created.astimezone(here_tz)
-                        recorded = point.recorded.astimezone(here_tz)
+                    here_tz = pytz.timezone(tz_str)
 
-                        row.append(created.isoformat())
-                        row.append(recorded.isoformat())
+                    created = point.created.astimezone(here_tz)
+                    recorded = point.recorded.astimezone(here_tz)
 
-                        row.append(tz_str)
+                    row.append(created.isoformat())
+                    row.append(created.astimezone(pytz.utc).isoformat())
+                    row.append(recorded.isoformat())
+                    row.append(recorded.astimezone(pytz.utc).isoformat())
 
-                        row.append(properties.get('tab-id', ''))
-                        row.append(properties.get('page-id', ''))
+                    row.append(tz_str)
 
-                        here_tz = pytz.timezone(tz_str)
+                    here_tz = pytz.timezone(tz_str)
 
-                        row.append(properties.get('top', ''))
-                        row.append(properties.get('left', ''))
-                        row.append(properties.get('width', ''))
-                        row.append(properties.get('height', ''))
-                        row.append(properties.get('url*', properties.get('url!', '')))
-                        row.append(properties.get('page-title*', properties.get('page-title!', '')))
+                    row.append(len(tasks))
+                    row.append(';'.join(tasks))
 
-                        writer.writerow(row)
-
-                    points_index += 10000
-
-                    outfile.flush()
+                    writer.writerow(row)
 
     return filename
