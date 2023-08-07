@@ -41,8 +41,15 @@ class Command(BaseCommand):
 
         active_users = []
 
+        excluded_users = []
+
+        try:
+            excluded_users = settings.WEBMUNK_EXCLUDE_NIGHTLY_EXPORT_USERS
+        except AttributeError:
+            pass
+
         for source in DataSource.objects.all().order_by('identifier'):
-            if (source.identifier in active_users) is False:
+            if (source.identifier in active_users) is False and (source.identifier in excluded_users) is False:
                 if source.should_suppress_alerts() is False:
                     active_users.append(source.identifier)
 

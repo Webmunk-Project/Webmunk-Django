@@ -4,6 +4,7 @@ import bz2
 import csv
 import datetime
 import gc
+import gzip
 import io
 import json
 import importlib
@@ -286,8 +287,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     if 'end_date' in parameters:
         prefix += '_' + (parameters['end_date'].date() - datetime.timedelta(days=1)).isoformat()
 
-    dumpdata_apps = (
-    )
+    dumpdata_apps = ()
 
     backup_staging = tempfile.gettempdir()
 
@@ -344,50 +344,82 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     scroll_def = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-scroll-position')
     class_def = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-class-added')
 
-    query = Q(generator_definition=action_def) | Q(generator_definition=click_def) | Q(generator_definition=hide_def) | Q(generator_definition=show_def) | Q(generator_definition=log_def) | Q(generator_definition=match_def) | Q(generator_definition=scroll_def) | Q(generator_definition=class_def) # pylint: disable=unsupported-binary-operation
+    data_types = [
+        action_def,
+        click_def,
+        hide_def,
+        show_def,
+        log_def,
+        match_def,
+        scroll_def,
+        class_def,
+    ]
 
-    if 'start_date' in parameters:
-        query = query & Q(recorded__gte=parameters['start_date'])
+    for data_type in data_types:
+        query = Q(generator_definition=data_type)
 
-    if 'end_date' in parameters:
-        query = query & Q(recorded__lt=parameters['end_date'])
+        if 'start_date' in parameters:
+            query = query & Q(recorded__gte=parameters['start_date'])
 
-    clear_archived = False
+        if 'end_date' in parameters:
+            query = query & Q(recorded__lt=parameters['end_date'])
 
-    if 'clear_archived' in parameters and parameters['clear_archived']:
-        clear_archived = True
+        clear_archived = False
 
-    print('[webmunk] Fetching count of data points...')
-    sys.stdout.flush()
+        if 'clear_archived' in parameters and parameters['clear_archived']:
+            clear_archived = True
 
-    count = DataPoint.objects.filter(query).count()
-
-    index = 0
-
-    while index < count:
-        filename = prefix + '_data_points_' + str(index) + '_' + str(count) + '.webmunk-pd-bundle.bz2'
-
-        print('[webmunk] Backing up data points ' + str(index) + ' of ' + str(count) + '...')
+        print('[webmunk] Fetching count of data points (%s)...' % data_type)
         sys.stdout.flush()
 
-        bundle = []
+        point_pks = DataPoint.objects.filter(query).values_list('pk', flat=True)
 
-        for point in DataPoint.objects.filter(query).order_by('recorded')[index:(index + bundle_size)]:
-            bundle.append(point.fetch_properties())
+        # count = DataPoint.objects.filter(query).count()
 
-            if clear_archived:
-                to_clear.append('webmunk:' + str(point.pk))
+        count = len(point_pks)
 
-        index += bundle_size
+        index = 0
 
-        compressed_str = bz2.compress(json.dumps(bundle).encode('utf-8'))
+        while index < count:
+            filename = '%s_%s_data_points_%s_%s.webmunk-pd-bundle.gz' % (prefix, data_type, index, count)
 
-        path = os.path.join(backup_staging, filename)
+            print('[webmunk] Backing up data points %s of %s (%s)...' % (index, count, data_type))
+            sys.stdout.flush()
 
-        with open(path, 'wb') as compressed_file:
-            compressed_file.write(compressed_str)
+            bundle = []
 
-        to_transmit.append(path)
+            # for point in DataPoint.objects.filter(query).order_by('pk')[index:(index + bundle_size)]:
+            for point_pk in point_pks[index:(index + bundle_size)]:
+                point = DataPoint.objects.get(pk=point_pk)
+
+                bundle.append(point.fetch_properties())
+
+                if clear_archived:
+                    to_clear.append('webmunk:' + str(point.pk))
+
+            index += bundle_size
+
+            # print('[webmunk] Dumping %s...' % len(bundle))
+            # sys.stdout.flush()
+
+            to_compress = json.dumps(bundle) # .encode('utf-8')
+
+            # print('[webmunk] Compressing %s...' % len(to_compress))
+            # sys.stdout.flush()
+
+            compressed_str = gzip.compress(bytes(to_compress, 'utf-8'), compresslevel=1)
+
+            # compressed_str = bz2.compress(to_compress, compresslevel=1)
+
+            path = os.path.join(backup_staging, filename)
+
+            # print('[webmunk] Writing %s...' % len(compressed_str))
+            # sys.stdout.flush()
+
+            with open(path, 'wb') as compressed_file:
+                compressed_file.write(compressed_str)
+
+            to_transmit.append(path)
 
     return to_transmit, to_clear
 
