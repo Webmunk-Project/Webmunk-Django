@@ -4,6 +4,7 @@ import csv
 import datetime
 import gc
 import io
+import logging
 import os
 import tempfile
 
@@ -78,14 +79,19 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     date_sort = '-recorded'
 
-                points_count = points.count()
-
                 points = points.order_by(date_sort)
+
+                point_pks = points.values_list('pk', flat=True)
+
+                points_count = len(point_pks)
 
                 points_index = 0
 
                 while points_index < points_count:
-                    for point in points[points_index:(points_index + 10000)]:
+                    logging.debug('[%s] %s/%s', source, points_index, points_count)
+
+                    for point_pk in point_pks[points_index:(points_index + 10000)]:
+                        point = DataPoint.objects.get(pk=point_pk)
 
                         properties = point.fetch_properties()
 
