@@ -5,9 +5,10 @@ import csv
 import datetime
 import gc
 import gzip
+import importlib
 import io
 import json
-import importlib
+import logging
 import os
 import sys
 import tempfile
@@ -123,6 +124,8 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                         points_index = 0
 
                         while points_index < points_count:
+                            logging.debug('[%s] %s/%s', source, points_index, points_count)
+
                             for point in points[points_index:(points_index + 10000)]:
                                 properties = point.fetch_properties()
 
@@ -436,3 +439,10 @@ def clear_points(to_clear):
         point_pk = int(point_id.replace('webmunk:', ''))
 
         DataPoint.objects.filter(pk=point_pk).delete()
+
+def postgres_additions():
+    return (
+        'CREATE INDEX passive_data_kit_source_reference_id_datapoint_generator_definition_id_created_recorded_id_custom ON public.passive_data_kit_datapoint USING btree (source_reference_id, generator_definition_id, created, recorded, id);',
+        'CREATE INDEX passive_data_kit_datapoint_id_recorded_created_generator_definition_id_source_reference_id_custom ON public.passive_data_kit_datapoint USING btree (id, recorded, created, generator_definition_id, source_reference_id);',
+        'CREATE INDEX passive_data_kit_datapoint_id_recorded_created_custom ON public.passive_data_kit_datapoint USING btree (id, recorded, created);',
+    )
