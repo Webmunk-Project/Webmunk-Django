@@ -4,9 +4,8 @@
 import json
 
 from django.core.management.base import BaseCommand
-from django.db.models.functions import Length
 
-from passive_data_kit.models import DataSourceReference, DataPoint
+from passive_data_kit.models import DataPoint
 
 class Command(BaseCommand):
     help = 'Populates Amazon ASIN item metadata'
@@ -16,9 +15,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-statements
         points_count = DataPoint.objects.all().order_by('-pk').first().pk
-        
+
         print('%s points' % points_count)
-        
+
         points_index = 0
 
         counts = {}
