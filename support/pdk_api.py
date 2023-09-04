@@ -42,7 +42,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
         try:
             output_file = generator_module.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
         except TypeError:
-            print('TODO: Update ' + generator + '.compile_report to support data_start, data_end, and date_type parameters!')
+            logging.error('TODO: Update ' + generator + '.compile_report to support data_start, data_end, and date_type parameters!')
 
             output_file = generator_module.compile_report(generator, sources)
 
@@ -243,7 +243,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
             return filename
     except: # pylint: disable=bare-except
-        print(generator + ': ' + str(sources))
+        logging.error(generator + ': ' + str(sources))
 
         traceback.print_exc()
 
@@ -276,7 +276,7 @@ def load_backup(filename, content):
 
         bundle.save()
     else:
-        print('[webmunk.pdk_api.load_backup] Unknown file type: ' + filename)
+        logging.error('[webmunk.pdk_api.load_backup] Unknown file type: ' + filename)
 
 def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-statements
     to_transmit = []
@@ -300,7 +300,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         pass
 
     for app in dumpdata_apps:
-        print('[webmunk] Backing up ' + app + '...')
+        logging.info('[webmunk] Backing up ' + app + '...')
         sys.stdout.flush()
 
         buf = StringIO.StringIO()
@@ -336,7 +336,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     try:
         bundle_size = settings.PDK_BACKUP_BUNDLE_SIZE
     except AttributeError:
-        print('Define PDK_BACKUP_BUNDLE_SIZE in the settings to define the size of backup payloads.')
+        logging.error('Define PDK_BACKUP_BUNDLE_SIZE in the settings to define the size of backup payloads.')
 
     action_def = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-action')
     click_def = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-element-click')
@@ -372,7 +372,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         if 'clear_archived' in parameters and parameters['clear_archived']:
             clear_archived = True
 
-        print('[webmunk] Fetching count of data points (%s)...' % data_type)
+        logging.info('[webmunk] Fetching count of data points (%s)...' % data_type)
         sys.stdout.flush()
 
         point_pks = DataPoint.objects.filter(query).values_list('pk', flat=True)
@@ -386,7 +386,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         while index < count:
             filename = '%s_%s_data_points_%s_%s.webmunk-pd-bundle.gz' % (prefix, data_type, index, count)
 
-            print('[webmunk] Backing up data points %s of %s (%s)...' % (index, count, data_type))
+            logging.info('[webmunk] Backing up data points %s of %s (%s)...' % (index, count, data_type))
             sys.stdout.flush()
 
             bundle = []
@@ -431,7 +431,7 @@ def clear_points(to_clear):
 
     for i in range(0, points_count):
         if (i % 1000) == 0:
-            print('[webmunk] Clearing points ' + str(i) + ' of ' + str(points_count) + '...')
+            logging.info('[webmunk] Clearing points ' + str(i) + ' of ' + str(points_count) + '...')
             sys.stdout.flush()
 
         point_id = to_clear[i]

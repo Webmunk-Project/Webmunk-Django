@@ -68,7 +68,7 @@ class Command(BaseCommand):
                 try:
                     products = api.query(asin_item.asin, progress_bar=False)
 
-                    # print('%s: %s' % (asin_item.asin, json.dumps(products, indent=2, cls=NumpyEncoder)))
+                    logging.info('%s: %s' % (asin_item.asin, json.dumps(products, indent=2, cls=NumpyEncoder)))
 
                     if len(products) > 0 and products[0] is not None:
                         product = products[0]
@@ -87,17 +87,17 @@ class Command(BaseCommand):
 
                                 asin_item.category = category
 
-                                # print('FOUND: %s - %s / %s' % (asin_item.asin, asin_item.name, asin_item.category))
+                                logging.info('FOUND: %s - %s / %s' % (asin_item.asin, asin_item.name, asin_item.category))
 
                             metadata['keepa'] = products
                         else:
-                            print('NULL ITEM: %s' % asin_item.asin)
+                            logging.info('NULL ITEM: %s' % asin_item.asin)
                             metadata['keepa'] = 'Null item'
                     else:
-                        print('NOT FOUND: %s' % asin_item.asin)
+                        logging.info('NOT FOUND: %s' % asin_item.asin)
                         metadata['keepa'] = 'Not found'
                 except: # pylint: disable=bare-except
-                    print('Invalid identifier: %s' % asin_item.asin)
+                    logging.info('Invalid identifier: %s' % asin_item.asin)
                     metadata['keepa'] = 'Invalid identifier'
 
             try:
