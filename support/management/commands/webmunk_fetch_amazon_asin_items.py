@@ -2,6 +2,7 @@
 # pylint: disable=no-member,line-too-long
 
 import datetime
+import logging
 import re
 
 from django.core.management.base import BaseCommand
@@ -48,7 +49,7 @@ class Command(BaseCommand):
 
                 point_count = DataPoint.objects.filter(query).count()
 
-                # print('FOUND BETWEEN %s -- %s --> %s -- %s' % (window_start, window_end, point_count, timezone.now()))
+                logging.info('FOUND BETWEEN %s -- %s --> %s -- %s' % (window_start, window_end, point_count, timezone.now()))
 
                 window_start = window_end
         else:
@@ -67,7 +68,7 @@ class Command(BaseCommand):
         for point_pk in point_pks:
             point = DataPoint.objects.get(pk=point_pk)
 
-            # print('INDEX: %s / %s -- %s -- %s' % (index, point_count, point.generator_identifier, timezone.now()))
+            logging.debug('INDEX: %s / %s -- %s -- %s' % (index, point_count, point.generator_identifier, timezone.now()))
 
             index += 1
 
