@@ -70,7 +70,8 @@ class Command(BaseCommand):
         for point_pk in point_pks:
             point = DataPoint.objects.get(pk=point_pk)
 
-            logging.debug('INDEX: %s / %s -- %s -- %s' % (index, point_count, point.generator_identifier, timezone.now()))
+            if (index % 100 == 0):
+                logging.debug('INDEX: %s / %s -- %s -- %s' % (index, point_count, point.generator_identifier, timezone.now()))
 
             index += 1
 
