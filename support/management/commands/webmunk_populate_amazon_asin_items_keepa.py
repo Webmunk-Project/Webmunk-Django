@@ -66,9 +66,9 @@ class Command(BaseCommand):
                 time.sleep(settings.KEEPA_API_SLEEP_SECONDS)
 
                 try:
-                    products = api.query(asin_item.asin, progress_bar=False)
+                    products = api.query(asin_item.asin, progress_bar=False, buybox=True)
 
-                    logging.info('%s: %s', asin_item.asin, json.dumps(products, indent=2, cls=NumpyEncoder))
+                    logging.debug('%s: %s', asin_item.asin, json.dumps(products, indent=2, cls=NumpyEncoder))
 
                     if len(products) > 0 and products[0] is not None:
                         product = products[0]
@@ -107,3 +107,5 @@ class Command(BaseCommand):
 
             asin_item.updated = timezone.now()
             asin_item.save()
+
+            asin_item.fetch_brand()

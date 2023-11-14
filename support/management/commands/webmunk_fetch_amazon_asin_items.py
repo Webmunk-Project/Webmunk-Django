@@ -20,7 +20,7 @@ class Command(BaseCommand):
         pass
 
     @handle_lock
-    def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-locals
+    def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-locals, too-many-statements
         latest_asin_item = AmazonASINItem.objects.all().order_by('-pk').first()
 
         orders = DataGeneratorDefinition.definition_for_identifier('webmunk-amazon-order')
@@ -64,7 +64,7 @@ class Command(BaseCommand):
 
         saved = 0
 
-        for point_pk in point_pks:
+        for point_pk in point_pks: # pylint: disable=too-many-nested-blocks
             point = DataPoint.objects.get(pk=point_pk)
 
             # print('INDEX: %s / %s -- %s -- %s' % (index, point_count, point.generator_identifier, timezone.now()))
@@ -94,7 +94,7 @@ class Command(BaseCommand):
                             # print('ADDED FROM URL: %s' % matched_item)
                             asins.append(matched_item)
 
-                for key, ele_matches in props.get('pattern-matches', {}).items():
+                for key, ele_matches in props.get('pattern-matches', {}).items(): # pylint: disable=unused-variable
                     for ele_match in ele_matches:
                         element = ele_match.get('element-content!', ele_match.get('element-content*', None))
 
