@@ -41,7 +41,7 @@ class Command(BaseCommand):
             while query is None or point_count == 0:
                 window_end = window_start + datetime.timedelta(seconds=300)
 
-                logging.info('COUNTING BETWEEN %s -- %s -- %s' % (window_start, window_end, timezone.now()))
+                logging.info('COUNTING BETWEEN %s -- %s -- %s', window_start, window_end, timezone.now())
 
                 query = point_query & Q(created__gt=window_start)
                 query = query & Q(created__lte=window_end)
@@ -51,7 +51,7 @@ class Command(BaseCommand):
 
                 point_count = DataPoint.objects.filter(query).count()
 
-                logging.info('FOUND BETWEEN %s -- %s --> %s -- %s' % (window_start, window_end, point_count, timezone.now()))
+                logging.info('FOUND BETWEEN %s -- %s --> %s -- %s', window_start, window_end, point_count, timezone.now())
 
                 window_start = window_end
         else:
@@ -71,7 +71,7 @@ class Command(BaseCommand):
             point = DataPoint.objects.get(pk=point_pk)
 
             if (index % 100 == 0):
-                logging.debug('INDEX: %s / %s -- %s -- %s' % (index, point_count, point.generator_identifier, timezone.now()))
+                logging.debug('INDEX: %s / %s -- %s -- %s', index, point_count, point.generator_identifier, timezone.now())
 
             index += 1
 
