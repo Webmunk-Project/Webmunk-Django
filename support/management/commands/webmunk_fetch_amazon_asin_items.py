@@ -2,6 +2,7 @@
 # pylint: disable=no-member,line-too-long
 
 import datetime
+import logging
 import re
 
 from django.core.management.base import BaseCommand
@@ -38,7 +39,9 @@ class Command(BaseCommand):
             window_start = latest_asin_item.added
 
             while query is None or point_count == 0:
-                window_end = window_start + datetime.timedelta(seconds=1800)
+                window_end = window_start + datetime.timedelta(seconds=300)
+
+                logging.info('COUNTING BETWEEN %s -- %s -- %s' % (window_start, window_end, timezone.now()))
 
                 query = point_query & Q(created__gt=window_start)
                 query = query & Q(created__lte=window_end)
@@ -48,7 +51,7 @@ class Command(BaseCommand):
 
                 point_count = DataPoint.objects.filter(query).count()
 
-                # print('FOUND BETWEEN %s -- %s --> %s -- %s' % (window_start, window_end, point_count, timezone.now()))
+                logging.info('FOUND BETWEEN %s -- %s --> %s -- %s' % (window_start, window_end, point_count, timezone.now()))
 
                 window_start = window_end
         else:
@@ -67,7 +70,8 @@ class Command(BaseCommand):
         for point_pk in point_pks: # pylint: disable=too-many-nested-blocks
             point = DataPoint.objects.get(pk=point_pk)
 
-            # print('INDEX: %s / %s -- %s -- %s' % (index, point_count, point.generator_identifier, timezone.now()))
+            if (index % 100 == 0):
+                logging.debug('INDEX: %s / %s -- %s -- %s' % (index, point_count, point.generator_identifier, timezone.now()))
 
             index += 1
 
