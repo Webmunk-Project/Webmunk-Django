@@ -78,9 +78,10 @@ class Command(BaseCommand):
                             if 'keepa' in metadata:
                                 product = metadata['keepa'][0]
 
-                                logging.info('Found %s on %s...', server, asin_item.asin)
+                                if isinstance(product, dict):
+                                    logging.info('Found %s on %s...', server, asin_item.asin)
 
-                                break
+                                    break
                 except AttributeError:
                     pass
 
