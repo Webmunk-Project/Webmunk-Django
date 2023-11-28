@@ -76,9 +76,9 @@ class Command(BaseCommand):
                             metadata = response.json()
 
                             if 'keepa' in metadata:
-                                product = metadata['keepa'][0]
-
                                 if isinstance(product, dict):
+                                    product = metadata['keepa'][0]
+
                                     logging.info('Found %s on %s...', server, asin_item.asin)
 
                                     break
