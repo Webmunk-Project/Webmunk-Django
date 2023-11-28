@@ -195,21 +195,33 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     'Date Updated',
                     'Name',
                     'Category',
+                    'Brand',
                     'Data URL',
                 ]
 
                 writer.writerow(columns)
 
-                asin_items = AmazonASINItem.objects.all().order_by('pk')
+                asin_items = AmazonASINItem.objects.all()
+
+                logging.info('Fetching count...')
 
                 item_count = asin_items.count()
                 item_index = 0
 
+                logging.info('Fetched count: %s', item_count)
+
+                asin_items = asin_items.order_by('pk')
+
                 here_tz = pytz.timezone(settings.TIME_ZONE)
 
+                items_exported = 0
+
                 while item_index < item_count:
-                    for asin_item in asin_items[item_index:(item_index + 1000)]:
+                    for asin_item in asin_items[item_index:(item_index + 500)]:
                         row = []
+
+                        if (items_exported % 500) == 0:
+                            logging.info('%s / %s', items_exported, item_count)
 
                         row.append(asin_item.asin)
 
@@ -229,6 +241,8 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                         else:
                             row.append('')
 
+                        row.append(asin_item.fetch_brand())
+
                         if asin_item.asin is not None and asin_item.asin != '':
                             row.append('https://%s%s' % (settings.ALLOWED_HOSTS[0], asin_item.get_absolute_url()))
                         else:
@@ -237,7 +251,9 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                         writer.writerow(row)
                         outfile.flush()
 
-                    item_index += 1000
+                        items_exported += 1
+
+                    item_index += 500
 
                     outfile.flush()
 
