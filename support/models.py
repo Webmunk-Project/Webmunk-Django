@@ -46,7 +46,7 @@ class AmazonASINItem(models.Model):
             json.loads(self.metadata)
 
             return '%s/%s.json' % (self.asin[:4], self.asin) # pylint: disable=unsubscriptable-object
-        except: # pylint: disable=bare-except
+        except: # pylint: disable=bare-except # nosec
             pass
 
         return ''
@@ -56,7 +56,7 @@ class AmazonASINItem(models.Model):
             metadata = json.loads(self.metadata)
 
             return json.dumps(metadata, indent=2, ignore_nan=True, default=None)
-        except: # pylint: disable=bare-except
+        except: # pylint: disable=bare-except # nosec
             pass
 
         return ''
