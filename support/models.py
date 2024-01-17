@@ -40,3 +40,23 @@ class AmazonASINItem(models.Model):
             self.save()
 
         return self.brand
+
+    def file_path(self):
+        try:
+            json.loads(self.metadata)
+
+            return '%s/%s.json' % (self.asin[:4], self.asin) # pylint: disable=unsubscriptable-object
+        except: # pylint: disable=bare-except
+            pass
+
+        return ''
+
+    def file_content(self):
+        try:
+            metadata = json.loads(self.metadata)
+
+            return json.dumps(metadata, indent=2, ignore_nan=True, default=None)
+        except: # pylint: disable=bare-except
+            pass
+
+        return ''

@@ -15,8 +15,12 @@ import tempfile
 import traceback
 
 from io import StringIO
+from zipfile import ZipFile
 
+import arrow
 import pytz
+
+from past.utils import old_div
 
 from django.conf import settings
 from django.core import management
@@ -184,78 +188,95 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
             return filename
 
         if generator == 'webmunk-asin-details':
-            filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
+            now = arrow.get()
 
-            with io.open(filename, 'w', encoding='utf-8') as outfile:
-                writer = csv.writer(outfile, delimiter='\t')
+            filename = tempfile.gettempdir() + os.path.sep + 'asin_items_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
-                columns = [
-                    'ASIN',
-                    'Date Added',
-                    'Date Updated',
-                    'Name',
-                    'Category',
-                    'Brand',
-                    'Data URL',
-                ]
+            with ZipFile(filename, 'w', allowZip64=True) as export_file:
+                data_filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
 
-                writer.writerow(columns)
+                with io.open(data_filename, 'w', encoding='utf-8') as outfile:
+                    writer = csv.writer(outfile, delimiter='\t')
 
-                asin_items = AmazonASINItem.objects.all()
+                    columns = [
+                        'ASIN',
+                        'Date Added',
+                        'Date Updated',
+                        'Name',
+                        'Category',
+                        'Brand',
+                        'Data URL',
+                        'File Path',
+                    ]
 
-                logging.info('Fetching count...')
+                    writer.writerow(columns)
 
-                item_count = asin_items.count()
-                item_index = 0
+                    asin_items = AmazonASINItem.objects.all()
 
-                logging.info('Fetched count: %s', item_count)
+                    logging.info('Fetching count...')
 
-                asin_items = asin_items.order_by('pk')
+                    item_count = asin_items.count()
+                    item_index = 0
 
-                here_tz = pytz.timezone(settings.TIME_ZONE)
+                    logging.info('Fetched count: %s', item_count)
 
-                items_exported = 0
+                    asin_items = asin_items.order_by('pk')
 
-                while item_index < item_count:
-                    for asin_item in asin_items[item_index:(item_index + 500)]:
-                        row = []
+                    here_tz = pytz.timezone(settings.TIME_ZONE)
 
-                        if (items_exported % 500) == 0:
-                            logging.info('%s / %s', items_exported, item_count)
+                    items_exported = 0
 
-                        row.append(asin_item.asin)
+                    while item_index < item_count:
+                        for asin_item in asin_items[item_index:(item_index + 500)]:
+                            row = []
 
-                        added = asin_item.added.astimezone(here_tz)
-                        updated = asin_item.updated.astimezone(here_tz)
+                            if (items_exported % 500) == 0:
+                                logging.info('%s / %s', items_exported, item_count)
 
-                        row.append(added.isoformat())
-                        row.append(updated.isoformat())
+                            row.append(asin_item.asin)
 
-                        if asin_item.name is not None:
-                            row.append(asin_item.name)
-                        else:
-                            row.append('')
+                            added = asin_item.added.astimezone(here_tz)
+                            updated = asin_item.updated.astimezone(here_tz)
 
-                        if asin_item.category is not None:
-                            row.append(asin_item.category)
-                        else:
-                            row.append('')
+                            row.append(added.isoformat())
+                            row.append(updated.isoformat())
 
-                        row.append(asin_item.fetch_brand())
+                            if asin_item.name is not None:
+                                row.append(asin_item.name)
+                            else:
+                                row.append('')
 
-                        if asin_item.asin is not None and asin_item.asin != '':
-                            row.append('https://%s%s' % (settings.ALLOWED_HOSTS[0], asin_item.get_absolute_url()))
-                        else:
-                            row.append('(No URL - missing ASIN)')
+                            if asin_item.category is not None:
+                                row.append(asin_item.category)
+                            else:
+                                row.append('')
 
-                        writer.writerow(row)
+                            row.append(asin_item.fetch_brand())
+
+                            if asin_item.asin is not None and asin_item.asin != '':
+                                row.append('https://%s%s' % (settings.ALLOWED_HOSTS[0], asin_item.get_absolute_url()))
+                            else:
+                                row.append('(No URL - missing ASIN)')
+
+                            asin_path = asin_item.file_path()
+
+                            row.append(asin_path)
+
+                            if asin_path != '':
+                                export_file.writestr(asin_path, asin_item.file_path())
+
+                            writer.writerow(row)
+                            outfile.flush()
+
+                            items_exported += 1
+
+                        item_index += 500
+
                         outfile.flush()
 
-                        items_exported += 1
+                export_file.write(data_filename, '%s.txt' % slugify(generator))
 
-                    item_index += 500
-
-                    outfile.flush()
+                os.remove(data_filename)
 
             return filename
     except: # pylint: disable=bare-except
