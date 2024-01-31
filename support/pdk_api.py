@@ -190,7 +190,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
         if generator == 'webmunk-asin-details':
             now = arrow.get()
 
-            filename = tempfile.gettempdir() + os.path.sep + 'asin_items_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
+            filename = tempfile.gettempdir() + os.path.sep + 'asin_items_' + str(now.timestamp()) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
             with ZipFile(filename, 'w', allowZip64=True) as export_file:
                 data_filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
@@ -200,11 +200,17 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     columns = [
                         'ASIN',
+                        'Type',
+                        'Brand',
+                        'Manufacturer',
+                        'Size',
+                        'Seller',
+                        'Title',
+                        'Root Category',
+                        'Category Tree',
+                        'Category Tree IDs',
                         'Date Added',
                         'Date Updated',
-                        'Name',
-                        'Category',
-                        'Brand',
                         'Data URL',
                         'File Path',
                     ]
@@ -230,28 +236,26 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                         for asin_item in asin_items[item_index:(item_index + 500)]:
                             row = []
 
-                            if (items_exported % 500) == 0:
+                            if (items_exported % 100) == 0:
                                 logging.info('%s / %s', items_exported, item_count)
 
                             row.append(asin_item.asin)
+
+                            row.append(asin_item.fetch_item_type())
+                            row.append(asin_item.fetch_brand())
+                            row.append(asin_item.fetch_manufacturer())
+                            row.append(asin_item.fetch_size())
+                            row.append(asin_item.fetch_seller())
+                            row.append(asin_item.fetch_title())
+                            row.append(asin_item.fetch_root_category())
+                            row.append(asin_item.fetch_category())
+                            row.append(asin_item.fetch_category_ids())
 
                             added = asin_item.added.astimezone(here_tz)
                             updated = asin_item.updated.astimezone(here_tz)
 
                             row.append(added.isoformat())
                             row.append(updated.isoformat())
-
-                            if asin_item.name is not None:
-                                row.append(asin_item.name)
-                            else:
-                                row.append('')
-
-                            if asin_item.category is not None:
-                                row.append(asin_item.category)
-                            else:
-                                row.append('')
-
-                            row.append(asin_item.fetch_brand())
 
                             if asin_item.asin is not None and asin_item.asin != '':
                                 row.append('https://%s%s' % (settings.ALLOWED_HOSTS[0], asin_item.get_absolute_url()))
@@ -262,8 +266,8 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                             row.append(asin_path)
 
-                            if asin_path != '':
-                                export_file.writestr(asin_path, asin_item.file_path())
+                            # if asin_path != '':
+                            #    export_file.writestr(asin_path, asin_item.file_path())
 
                             writer.writerow(row)
                             outfile.flush()

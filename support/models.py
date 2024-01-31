@@ -28,7 +28,13 @@ class AmazonASINItem(models.Model):
 
     def fetch_brand(self):
         if self.brand is None and self.metadata is not None:
-            metadata = json.loads(self.metadata)
+            metadata = None
+
+            try:
+                metadata = self.cached_metadata
+            except:
+                metadata = json.loads(self.metadata)
+                self.cached_metadata = metadata
 
             try:
                 for keepa in metadata.get('keepa', []):
@@ -40,6 +46,169 @@ class AmazonASINItem(models.Model):
             self.save()
 
         return self.brand
+
+    def fetch_root_category(self):
+        if self.metadata is not None:
+            metadata = None
+
+            try:
+                metadata = self.cached_metadata
+            except:
+                metadata = json.loads(self.metadata)
+                self.cached_metadata = metadata
+
+            for keepa in metadata.get('keepa', []):
+                try:
+                    return keepa.get('rootCategory', None)
+                except AttributeError:
+                    pass
+
+        return None
+
+    def fetch_category(self):
+        category = ''
+
+        if self.metadata is not None:
+            metadata = None
+
+            try:
+                metadata = self.cached_metadata
+            except:
+                metadata = json.loads(self.metadata)
+                self.cached_metadata = metadata
+
+            for keepa in metadata.get('keepa', []):
+                try:
+                    if keepa.get('categoryTree', None) is not None:
+                        for category_item in keepa.get('categoryTree', []):
+                            if category != '':
+                                category = category + ' > '
+
+                            category = category + category_item['name']
+                except AttributeError:
+                    pass
+
+        return category
+
+    def fetch_category_ids(self):
+        category = ''
+
+        if self.metadata is not None:
+            metadata = None
+
+            try:
+                metadata = self.cached_metadata
+            except:
+                metadata = json.loads(self.metadata)
+                self.cached_metadata = metadata
+
+            for keepa in metadata.get('keepa', []):
+                try:
+                    if keepa.get('categoryTree', None) is not None:
+                        for category_item in keepa.get('categoryTree', []):
+                            if category != '':
+                                category = category + ' > '
+
+                            category = category + str(category_item['catId'])
+                except AttributeError:
+                    pass
+
+        return category
+
+    def fetch_item_type(self):
+        if self.metadata is not None:
+            metadata = None
+
+            try:
+                metadata = self.cached_metadata
+            except:
+                metadata = json.loads(self.metadata)
+                self.cached_metadata = metadata
+
+            for keepa in metadata.get('keepa', []):
+                try:
+                    return keepa.get('type', None)
+                except AttributeError:
+                    pass
+
+        return None
+
+    def fetch_manufacturer(self):
+        if self.metadata is not None:
+            metadata = None
+
+            try:
+                metadata = self.cached_metadata
+            except:
+                metadata = json.loads(self.metadata)
+                self.cached_metadata = metadata
+
+            for keepa in metadata.get('keepa', []):
+                try:
+                    return keepa.get('manufacturer', None)
+                except AttributeError:
+                    pass
+
+        return None
+
+    def fetch_seller(self):
+        if self.metadata is not None:
+            metadata = None
+
+            try:
+                metadata = self.cached_metadata
+            except:
+                metadata = json.loads(self.metadata)
+                self.cached_metadata = metadata
+
+            for keepa in metadata.get('keepa', []):
+                try:
+                    seller_id = keepa.get('sellerIds', None)
+
+                    if seller_id is None:
+                        seller_id = keepa.get('buyBoxSellerId', None)
+
+                    return seller_id
+                except AttributeError:
+                    pass
+
+        return None
+
+    def fetch_size(self):
+        if self.metadata is not None:
+            metadata = None
+
+            try:
+                metadata = self.cached_metadata
+            except:
+                metadata = json.loads(self.metadata)
+                self.cached_metadata = metadata
+
+            for keepa in metadata.get('keepa', []):
+                try:
+                    return keepa.get('size', None)
+                except AttributeError:
+                    pass
+
+        return None
+
+    def fetch_title(self):
+        if self.metadata is not None:
+            metadata = None
+
+            try:
+                metadata = self.cached_metadata
+            except:
+                metadata = json.loads(self.metadata)
+                self.cached_metadata = metadata
+
+            for keepa in metadata.get('keepa', []):
+                try:
+                    return keepa.get('title', None)
+                except AttributeError:
+                    pass
+
+        return None
 
     def file_path(self):
         try:
