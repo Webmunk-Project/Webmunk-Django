@@ -39,7 +39,7 @@ class Command(BaseCommand):
             window_start = latest_asin_item.added
 
             while query is None or point_count == 0:
-                window_end = window_start + datetime.timedelta(seconds=300)
+                window_end = window_start + datetime.timedelta(seconds=60)
 
                 logging.info('COUNTING BETWEEN %s -- %s -- %s', window_start, window_end, timezone.now())
 
