@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'prettyjson',
     'support',
+    'nagios_monitor',
     'passive_data_kit',
     'passive_data_kit_external_data',
 ]
