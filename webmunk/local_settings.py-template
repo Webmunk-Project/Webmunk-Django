@@ -1,0 +1,157 @@
+import datetime
+import os
+
+from django.utils import timezone
+
+# SETUP:
+# See https://humberto.io/blog/tldr-generate-django-secret-key/
+# for instructions on how to generate a new secret key locally.
+
+SECRET_KEY = 'CHANGE-ME' 
+
+# SETUP:
+# Replace with the outward-facing host name.
+
+ALLOWED_HOSTS = ['data.example.com'] 
+
+# SETUP:
+# Populate the setting below with the names and e-mail address of all users who should
+# receive server error e-mails and other operational issues. 
+
+ADMINS = [
+    ('Admin User', 'admin@example.com'),
+]
+
+# SETUP:
+# Replace the values below with the ones used to create the Postgres database.
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME':     'webmunk_data',
+        'USER':     'webmunk',
+        'PASSWORD': 'XXX',
+        'HOST': '127.0.0.1',
+    }
+}
+
+# SETUP:
+# Configure the time zone that should be used within the DCS server. A full list is 
+# available here: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+# Use the value from the "TZ Identifier" column in the table on the page.
+
+TIME_ZONE = 'America/New_York'
+
+# SETUP (OPTIONAL):
+# Replace values below with the public key given by running the "pdk_generate_key_pair" 
+# management command. This key is used to encrypts data provided via file upload. 
+# Store the private key elsewhere off-server to be used in the future should you need 
+# to decrypt the original uploads for reprocessing.
+
+PDK_EXTERNAL_CONTENT_PUBLIC_KEY = 'R2Bhmdp+Lr8nwqGFUfInp/OyHWD5h4TCPcKlVK1WjVw='
+
+# SETUP (OPTIONAL):
+# Replace values below with the public key given by running the "pdk_generate_backup_key" 
+# management command. This key may be used in some cases to encrypts data provided via 
+# file upload. 
+#
+# Note that this is a symmetric key that can be used to decrypt content as well as 
+# encrypt it.
+
+PDK_EXTERNAL_CONTENT_SYMETRIC_KEY = 'GCrD+ZG9oaJ021+wWBsbd2aRkUpckbd7P7TNWpXub4o='
+
+# SETUP (OPTIONAL):
+# Replace values below with the public key given by running the "pdk_generate_backup_key" 
+# management command. This key is used to encrypt incremental backups to cloud storage
+# providers.
+#
+# Note that this is a symmetric key that can be used to decrypt content as well as 
+# encrypt it.
+
+PDK_BACKUP_KEY = 'TW7sHEskfGSryhtuu9sQPwVbDTVO3gnuq709WBku834='
+
+# SETUP (OPTIONAL):
+# If enabling incremental backup, replace the values below with ones suitable for your
+# Amazon AWS account.
+
+PDK_BACKUP_AWS_REGION = 'us-east-1'
+PDK_BACKUP_AWS_ACCESS_KEY_ID = 'XXX'
+PDK_BACKUP_AWS_SECRET_ACCESS_KEY = 'XXX'
+
+# SETUP (OPTIONAL):
+# Replace with the name of the Amazon S3 bucket that will be receiving back up files.
+
+PDK_BACKUP_DESTINATIONS = (
+    's3://webmunk-server-backup',
+)
+
+# SETUP (OPTIONAL):
+# Replace with Keepa credentials if enabling local Keepa product lookups on this server.
+
+KEEPA_API_KEY = 'XXX'
+
+# SETUP (OPTIONAL):
+# If deploying in a federated capacity, list the other servers that should be consulted
+# for product information before accessing the Keepa API.
+
+WEBMUNK_ASIN_LOOKUP_SERVERS = [
+#    'server-1.example.com',
+#    'server-2.example.com',
+#    'server-3.example.com',
+]
+
+
+# Everything below this line may be ignored for the purposes of setup.
+#
+# For settings prefixed with "PDK", consult the relevant Passive Data Kit documentation
+# for details. 
+#
+# For other variables, consult support/documentation/settings.md or the Django 
+# documentation for details.
+
+DEBUG = False
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/1.11/howto/static-files/
+
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR + '/static/'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR + '/media/'
+
+SILENCED_SYSTEM_CHECKS = ['fields.W904', 'security.W004']
+
+SITE_URL = 'https://' + ALLOWED_HOSTS[0]
+
+ADDITIONAL_APPS = []
+
+PDK_DASHBOARD_ENABLED = True
+PDK_ENABLED_CHECKS = ('pdk-data-upload',)
+
+PDK_EXCESSIVE_VISUALIZATION_TIME = 300
+
+PDK_BUNDLE_PROCESS_LIMIT = 50000
+
+PDK_BACKUP_BUNDLE_SIZE = 128
+
+PDK_SOURCES_PER_REPORT_JOB = 10
+
+PDK_DEFAULT_GROUP_NAME = 'Webmunk'
+
+PDK_API_ENABLED = True
+
+WEBMUNK_DATA_FOLLOWUP_DAYS = 28
+
+def PDK_EXTERNAL_ADD_PENDING_ITEMS(response, data_request):
+    now = timezone.now()
+
+    followup_date = data_request.requested + datetime.timedelta(days=WEBMUNK_DATA_FOLLOWUP_DAYS)
+
+    if data_request.data_files.count() > 1 and data_request.data_files.filter(uploaded__gte=followup_date).count() == 0:
+        response.append('amazon')
+
+KEEPA_API_SLEEP_SECONDS = 1
+

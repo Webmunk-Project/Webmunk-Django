@@ -1,0 +1,17 @@
+# This is a sample CRON file for a running Webmunk data server.
+
+MAILTO=me@example.com
+SHELL=/bin/bash
+
+* * * * *    source /var/www/django/server.webmunk.org/venv/bin/activate && python /var/www/django/server.webmunk.org/webmunk/manage.py pdk_process_bundles
+* * * * *    source /var/www/django/server.webmunk.org/venv/bin/activate && python /var/www/django/server.webmunk.org/webmunk/manage.py pdk_compile_reports -v 1
+*/5 * * * *    source /var/www/django/server.webmunk.org/venv/bin/activate && python /var/www/django/server.webmunk.org/webmunk/manage.py webmunk_populate_amazon_asin_items_keepa -v 0
+*/5 * * * *    source /var/www/django/server.webmunk.org/venv/bin/activate && python /var/www/django/server.webmunk.org/webmunk/manage.py webmunk_fetch_amazon_asin_items
+*/5 * * * *    source /var/www/django/server.webmunk.org/venv/bin/activate && python /var/www/django/server.webmunk.org/webmunk/manage.py pdk_external_process_uploads
+*/5 * * * *    source /var/www/django/server.webmunk.org/venv/bin/activate && python /var/www/django/server.webmunk.org/webmunk/manage.py pdk_run_status_checks
+*/5 * * * *    source /var/www/django/server.webmunk.org/venv/bin/activate && python /var/www/django/server.webmunk.org/webmunk/manage.py pdk_update_performance_metadata
+*/5 * * * *    source /var/www/django/server.webmunk.org/venv/bin/activate && python /var/www/django/server.webmunk.org/webmunk/manage.py pdk_compile_visualizations
+*/15 * * * *    source /var/www/django/server.webmunk.org/venv/bin/activate && python /var/www/django/server.webmunk.org/webmunk/manage.py pdk_update_server_health
+5 1 * * *    source /var/www/django/server.webmunk.org/venv/bin/activate && python /var/www/django/server.webmunk.org/webmunk/manage.py pdk_clear_processed_bundles
+0 0 * * *    source /var/www/django/server.webmunk.org/venv/bin/activate && python /var/www/django/server.webmunk.org/webmunk/manage.py pdk_incremental_backup
+30 9 * * *    source /var/www/django/server.webmunk.org/venv/bin/activate && python /var/www/django/server.webmunk.org/webmunk/manage.py webmunk_create_nightly_export_job
