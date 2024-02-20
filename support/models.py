@@ -98,7 +98,7 @@ class AmazonASINItem(models.Model):
 
             try:
                 metadata = self.cached_metadata
-            except:
+            except: # pylint: disable=bare-except
                 metadata = json.loads(self.metadata)
                 self.cached_metadata = metadata # pylint: disable=attribute-defined-outside-init
 
