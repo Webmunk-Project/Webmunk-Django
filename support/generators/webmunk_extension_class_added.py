@@ -26,7 +26,7 @@ def extract_secondary_identifier(properties):
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Webmunk: Class Added Event'
 
-def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-statements
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-statements, too-many-branches
     filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
 
     with io.open(filename, 'w', encoding='utf-8') as outfile:
@@ -141,7 +141,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                         points_index += 10000
 
                         outfile.flush()
-            except:
+            except: # pylint: disable=bare-except
                 traceback.print_exc()
 
     return filename

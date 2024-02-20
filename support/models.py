@@ -32,9 +32,9 @@ class AmazonASINItem(models.Model):
 
             try:
                 metadata = self.cached_metadata
-            except:
+            except: # pylint: disable=bare-except
                 metadata = json.loads(self.metadata)
-                self.cached_metadata = metadata
+                self.cached_metadata = metadata # pylint: dissable=attribute-defined-outside-init
 
             try:
                 for keepa in metadata.get('keepa', []):
@@ -53,9 +53,9 @@ class AmazonASINItem(models.Model):
 
             try:
                 metadata = self.cached_metadata
-            except:
+            except: # pylint: disable=bare-except
                 metadata = json.loads(self.metadata)
-                self.cached_metadata = metadata
+                self.cached_metadata = metadata # pylint: dissable=attribute-defined-outside-init
 
             for keepa in metadata.get('keepa', []):
                 try:
@@ -68,14 +68,14 @@ class AmazonASINItem(models.Model):
     def fetch_category(self):
         category = ''
 
-        if self.metadata is not None:
+        if self.metadata is not None: # pylint: dissable=too-many-nested-blocks
             metadata = None
 
             try:
                 metadata = self.cached_metadata
-            except:
+            except: # pylint: disable=bare-except
                 metadata = json.loads(self.metadata)
-                self.cached_metadata = metadata
+                self.cached_metadata = metadata # pylint: dissable=attribute-defined-outside-init
 
             for keepa in metadata.get('keepa', []):
                 try:
@@ -93,14 +93,14 @@ class AmazonASINItem(models.Model):
     def fetch_category_ids(self):
         category = ''
 
-        if self.metadata is not None:
+        if self.metadata is not None: # pylint: dissable=too-many-nested-blocks
             metadata = None
 
             try:
                 metadata = self.cached_metadata
             except:
                 metadata = json.loads(self.metadata)
-                self.cached_metadata = metadata
+                self.cached_metadata = metadata # pylint: dissable=attribute-defined-outside-init
 
             for keepa in metadata.get('keepa', []):
                 try:
@@ -121,9 +121,9 @@ class AmazonASINItem(models.Model):
 
             try:
                 metadata = self.cached_metadata
-            except:
+            except: # pylint: disable=bare-except
                 metadata = json.loads(self.metadata)
-                self.cached_metadata = metadata
+                self.cached_metadata = metadata # pylint: dissable=attribute-defined-outside-init
 
             for keepa in metadata.get('keepa', []):
                 try:
@@ -139,9 +139,9 @@ class AmazonASINItem(models.Model):
 
             try:
                 metadata = self.cached_metadata
-            except:
+            except: # pylint: disable=bare-except
                 metadata = json.loads(self.metadata)
-                self.cached_metadata = metadata
+                self.cached_metadata = metadata # pylint: dissable=attribute-defined-outside-init
 
             for keepa in metadata.get('keepa', []):
                 try:
@@ -157,9 +157,9 @@ class AmazonASINItem(models.Model):
 
             try:
                 metadata = self.cached_metadata
-            except:
+            except: # pylint: disable=bare-except
                 metadata = json.loads(self.metadata)
-                self.cached_metadata = metadata
+                self.cached_metadata = metadata # pylint: dissable=attribute-defined-outside-init
 
             for keepa in metadata.get('keepa', []):
                 try:
@@ -180,9 +180,9 @@ class AmazonASINItem(models.Model):
 
             try:
                 metadata = self.cached_metadata
-            except:
+            except: # pylint: disable=bare-except
                 metadata = json.loads(self.metadata)
-                self.cached_metadata = metadata
+                self.cached_metadata = metadata # pylint: dissable=attribute-defined-outside-init
 
             for keepa in metadata.get('keepa', []):
                 try:
@@ -198,9 +198,9 @@ class AmazonASINItem(models.Model):
 
             try:
                 metadata = self.cached_metadata
-            except:
+            except: # pylint: disable=bare-except
                 metadata = json.loads(self.metadata)
-                self.cached_metadata = metadata
+                self.cached_metadata = metadata # pylint: dissable=attribute-defined-outside-init
 
             for keepa in metadata.get('keepa', []):
                 try:
