@@ -48,7 +48,7 @@ TIME_ZONE = 'America/New_York'
 # Store the private key elsewhere off-server to be used in the future should you need 
 # to decrypt the original uploads for reprocessing.
 
-PDK_EXTERNAL_CONTENT_PUBLIC_KEY = 'R2Bhmdp+Lr8nwqGFUfInp/OyHWD5h4TCPcKlVK1WjVw='
+PDK_EXTERNAL_CONTENT_PUBLIC_KEY = 'CHANGEME'
 
 # SETUP (OPTIONAL):
 # Replace values below with the public key given by running the "pdk_generate_backup_key" 
@@ -58,7 +58,7 @@ PDK_EXTERNAL_CONTENT_PUBLIC_KEY = 'R2Bhmdp+Lr8nwqGFUfInp/OyHWD5h4TCPcKlVK1WjVw='
 # Note that this is a symmetric key that can be used to decrypt content as well as 
 # encrypt it.
 
-PDK_EXTERNAL_CONTENT_SYMETRIC_KEY = 'GCrD+ZG9oaJ021+wWBsbd2aRkUpckbd7P7TNWpXub4o='
+PDK_EXTERNAL_CONTENT_SYMETRIC_KEY = 'CHANGEME'
 
 # SETUP (OPTIONAL):
 # Replace values below with the public key given by running the "pdk_generate_backup_key" 
@@ -68,7 +68,7 @@ PDK_EXTERNAL_CONTENT_SYMETRIC_KEY = 'GCrD+ZG9oaJ021+wWBsbd2aRkUpckbd7P7TNWpXub4o
 # Note that this is a symmetric key that can be used to decrypt content as well as 
 # encrypt it.
 
-PDK_BACKUP_KEY = 'TW7sHEskfGSryhtuu9sQPwVbDTVO3gnuq709WBku834='
+PDK_BACKUP_KEY = 'CHANGEME'
 
 # SETUP (OPTIONAL):
 # If enabling incremental backup, replace the values below with ones suitable for your
