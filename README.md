@@ -170,7 +170,7 @@ This job generates a nightly PDK report job that is uploaded to cloud storage fo
 * `webmunk-amazon-order`
 * `webmunk-local-tasks`
 
-A full example of the CRON file is available here: [Example Crontab](documentation/example.crontab).
+A full example of the CRON file is available here: [Example Crontab](support/documentation/example.crontab).
 
 ## License and Other Project Information
 
