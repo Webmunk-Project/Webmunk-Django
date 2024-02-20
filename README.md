@@ -96,7 +96,7 @@ If you are operating in an environment that fulfills all of the requirements abo
     $ cp webmunk/local_settings.py-template webmunk/local_settings.py
     ```
 
-    Open the new `local_settings.py` file and [follow the configuration instructions](/support/documentation/settings.md) to configure the server.
+    Open the new `local_settings.py` file and [follow the configuration instructions within the file](/webmunk/local_settings.py-template) to configure the server.
     
 6. Once the server has been configured, initialize the database:
 
