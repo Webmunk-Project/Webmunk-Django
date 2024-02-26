@@ -9,6 +9,7 @@ import time
 import keepa
 import numpy
 import pandas
+import requests
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -40,7 +41,7 @@ class Command(BaseCommand):
         pass
 
     @handle_lock
-    def handle(self, *args, **options): # pylint: disable=too-many-branches
+    def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-locals, too-many-statements
         verbosity = options.get('verbosity', 0)
 
         if verbosity == 0:
@@ -63,47 +64,74 @@ class Command(BaseCommand):
             metadata = {}
 
             if len(asin_item.asin) <= 10:
-                time.sleep(settings.KEEPA_API_SLEEP_SECONDS)
+                product = None
 
                 try:
-                    products = api.query(asin_item.asin, progress_bar=False)
+                    for server in settings.WEBMUNK_ASIN_LOOKUP_SERVERS:
+                        url = 'https://%s/support/asin/%s.json' % (server, asin_item.asin)
 
-                    # print('%s: %s' % (asin_item.asin, json.dumps(products, indent=2, cls=NumpyEncoder)))
+                        response = requests.get(url, timeout=60)
 
-                    if len(products) > 0 and products[0] is not None:
-                        product = products[0]
+                        if response.status_code == 200:
+                            metadata = response.json()
 
-                        if product['title'] is not None:
-                            asin_item.name = product['title']
+                            if 'keepa' in metadata:
+                                if isinstance(product, dict):
+                                    product = metadata['keepa'][0]
 
-                            category = ''
+                                    logging.info('Found %s on %s...', server, asin_item.asin)
 
-                            if product.get('categoryTree', None) is not None:
-                                for category_item in product.get('categoryTree', []):
-                                    if category != '':
-                                        category = category + ' > '
+                                    break
+                except AttributeError:
+                    pass
 
-                                    category = category + category_item['name']
+                if product is None:
+                    time.sleep(settings.KEEPA_API_SLEEP_SECONDS)
 
-                                asin_item.category = category
+                    try:
+                        products = api.query(asin_item.asin, progress_bar=False, buybox=True)
 
-                                # print('FOUND: %s - %s / %s' % (asin_item.asin, asin_item.name, asin_item.category))
+                        logging.debug('%s: %s', asin_item.asin, json.dumps(products, indent=2, cls=NumpyEncoder))
 
-                            metadata['keepa'] = products
+                        if len(products) > 0 and products[0] is not None:
+                            product = products[0]
                         else:
-                            print('NULL ITEM: %s' % asin_item.asin)
-                            metadata['keepa'] = 'Null item'
+                            logging.info('NOT FOUND: %s', asin_item.asin)
+                            metadata['keepa'] = 'Not found'
+                    except: # pylint: disable=bare-except
+                        logging.info('Invalid identifier: %s', asin_item.asin)
+                        metadata['keepa'] = 'Invalid identifier'
+
+                if product is not None:
+                    if product['title'] is not None:
+                        asin_item.name = product['title']
+
+                        category = ''
+
+                        if product.get('categoryTree', None) is not None:
+                            for category_item in product.get('categoryTree', []):
+                                if category != '':
+                                    category = category + ' > '
+
+                                category = category + category_item['name']
+
+                            asin_item.category = category
+
+                            logging.info('FOUND: %s - %s / %s', asin_item.asin, asin_item.name, asin_item.category)
+
+                        metadata['keepa'] = [product]
+
+                        try:
+                            asin_item.metadata = json.dumps(metadata, indent=2, cls=NumpyEncoder)
+                        except ValueError:
+                            pass # Pandas issue
                     else:
-                        print('NOT FOUND: %s' % asin_item.asin)
-                        metadata['keepa'] = 'Not found'
-                except: # pylint: disable=bare-except
-                    print('Invalid identifier: %s' % asin_item.asin)
-                    metadata['keepa'] = 'Invalid identifier'
+                        logging.info('NULL ITEM: %s', asin_item.asin)
+                        metadata['keepa'] = 'Null item'
+                else:
+                    metadata['keepa'] = 'Not found'
 
-            try:
-                asin_item.metadata = json.dumps(metadata, indent=2, cls=NumpyEncoder)
-            except ValueError:
-                pass # Pandas issue
+                asin_item.updated = timezone.now()
+                asin_item.save()
 
-            asin_item.updated = timezone.now()
-            asin_item.save()
+                asin_item.fetch_brand()

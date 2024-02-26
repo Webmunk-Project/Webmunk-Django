@@ -5,6 +5,7 @@ import datetime
 
 import arrow
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -13,13 +14,13 @@ from passive_data_kit.decorators import handle_lock
 from passive_data_kit.models import ReportJobBatchRequest, DataSource
 
 class Command(BaseCommand):
-    help = 'Creates a nightly job to upload data to Dropbox.'
+    help = 'Creates a nightly job to upload data to the cloud.'
 
     def add_arguments(self, parser):
         parser.add_argument('--date',
                             type=str,
                             dest='date',
-                            help='Date of app usage in YYY-MM-DD format')
+                            help='Date of app usage in YYYY-MM-DD format')
 
         parser.add_argument('--priority',
                             type=int,
@@ -40,8 +41,15 @@ class Command(BaseCommand):
 
         active_users = []
 
+        excluded_users = []
+
+        try:
+            excluded_users = settings.WEBMUNK_EXCLUDE_NIGHTLY_EXPORT_USERS
+        except AttributeError:
+            pass
+
         for source in DataSource.objects.all().order_by('identifier'):
-            if (source.identifier in active_users) is False:
+            if (source.identifier in active_users) is False and (source.identifier in excluded_users) is False:
                 if source.should_suppress_alerts() is False:
                     active_users.append(source.identifier)
 
@@ -59,6 +67,8 @@ class Command(BaseCommand):
             'webmunk-extension-scroll-position',
             'webmunk-visibility-export',
             'webmunk-extension-action',
+            'webmunk-amazon-order',
+            'webmunk-local-tasks',
         ]
 
         parameters['export_raw'] = False
@@ -66,6 +76,10 @@ class Command(BaseCommand):
         parameters['data_end'] = yesterday.strftime('%m/%d/%Y')
         parameters['date_type'] = 'recorded'
         parameters['path'] = yesterday.strftime('%Y-%m-%d/')
+
+        prefix = ('%s_%s' % (settings.ALLOWED_HOSTS[0], yesterday.isoformat(),))
+
+        parameters['prefix'] = prefix
 
         priority = options.get('priority', 0)
 

@@ -4,6 +4,7 @@ import csv
 import datetime
 import gc
 import io
+import logging
 import os
 import tempfile
 
@@ -52,10 +53,6 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
         click_reference = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-element-click')
 
         for source in sorted(sources): # pylint: disable=too-many-nested-blocks
-            # print('Source: %s' % (source))
-
-            gc.collect()
-
             data_source = DataSource.objects.filter(identifier=source).first()
 
             if data_source is not None and data_source.server is None:
@@ -87,16 +84,30 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     date_sort = '-recorded'
 
-                points = points.order_by(date_sort)
+                # points = points.order_by(date_sort)
 
-                points_count = points.count()
+                # point_pks = points.values_list('pk', flat=True)
+
+                # points_count = len(point_pks)
+
+                logging.debug('[%s] Fetching point PKs...', source)
+
+                point_pks = list(points.values_list('pk', date_sort.replace('-', '')))
+
+                point_pks.sort(key=lambda pair: pair[1], reverse=True)
+
+                points_count = len(point_pks)
+
+                logging.debug('[%s] %d PKs fetched.', source, points_count)
 
                 points_index = 0
 
                 while points_index < points_count:
-                    # print('  Index: %d / %d' % (points_index, points_count))
+                    logging.debug('[%s] %s/%s', source, points_index, points_count)
 
-                    for point in points[points_index:(points_index + 100)]:
+                    for point_pk in point_pks[points_index:(points_index + 100)]:
+                        point = DataPoint.objects.get(pk=point_pk[0])
+
                         properties = point.fetch_properties()
 
                         row = []
@@ -134,10 +145,13 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                         row.append(properties.get('url*', ''))
                         row.append(properties.get('page-title*', properties.get('page-title!', '')))
+
                         row.append(remove_newlines(properties.get('element-content*', properties.get('element-content!', ''))))
 
                         writer.writerow(row)
 
                     points_index += 100
+
+                    outfile.flush()
 
     return filename

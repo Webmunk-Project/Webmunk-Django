@@ -4,6 +4,7 @@ import csv
 import datetime
 import gc
 import io
+import logging
 import os
 import tempfile
 
@@ -87,53 +88,79 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     date_sort = '-recorded'
 
-                points = points.order_by(date_sort)
+                # points = points.order_by(date_sort)
 
-                for point in points:
-                    properties = point.fetch_properties()
+                # point_pks = points.values_list('pk', flat=True)
 
-                    row = []
+                # points_count = len(point_pks)
 
-                    row.append(point.source)
+                logging.debug('[%s] Fetching point PKs...', source)
 
-                    tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
+                point_pks = list(points.values_list('pk', date_sort.replace('-', '')))
 
-                    here_tz = pytz.timezone(tz_str)
+                point_pks.sort(key=lambda pair: pair[1], reverse=True)
 
-                    created = point.created.astimezone(here_tz)
-                    recorded = point.recorded.astimezone(here_tz)
+                points_count = len(point_pks)
 
-                    row.append(created.isoformat())
-                    row.append(recorded.isoformat())
+                logging.debug('[%s] %d PKs fetched.', source, points_count)
 
-                    row.append(tz_str)
+                points_index = 0
 
-                    here_tz = pytz.timezone(tz_str)
+                while points_index < points_count:
+                    logging.debug('[%s] %s/%s', source, points_index, points_count)
 
-                    row.append(properties.get('tab-id', ''))
-                    row.append(properties.get('page-id', ''))
+                    for point_pk in point_pks[points_index:(points_index + 10000)]:
+                        point = DataPoint.objects.get(pk=point_pk[0])
 
-                    if point.generator_identifier == 'webmunk-extension-element-show':
-                        row.append(1)
-                    else:
-                        row.append(0)
+                        properties = point.fetch_properties()
 
-                    row.append(properties.get('element-class', ''))
+                        row = []
 
-                    offset = properties.get('offset', {})
+                        row.append(point.source)
 
-                    row.append(offset.get('top', ''))
-                    row.append(offset.get('left', ''))
+                        tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
 
-                    size = properties.get('size', {})
+                        here_tz = pytz.timezone(tz_str)
 
-                    row.append(size.get('width', ''))
-                    row.append(size.get('height', ''))
+                        created = point.created.astimezone(here_tz)
+                        recorded = point.recorded.astimezone(here_tz)
 
-                    row.append(properties.get('url*', properties.get('url!', '')))
-                    row.append(properties.get('page-title*', properties.get('page-title!', '')))
-                    row.append(remove_newlines(properties.get('element-content*', properties.get('element-content!', ''))))
+                        row.append(created.isoformat())
+                        row.append(recorded.isoformat())
 
-                    writer.writerow(row)
+                        row.append(tz_str)
+
+                        here_tz = pytz.timezone(tz_str)
+
+                        row.append(properties.get('tab-id', ''))
+                        row.append(properties.get('page-id', ''))
+
+                        if point.generator_identifier == 'webmunk-extension-element-show':
+                            row.append(1)
+                        else:
+                            row.append(0)
+
+                        row.append(properties.get('element-class', ''))
+
+                        offset = properties.get('offset', {})
+
+                        row.append(offset.get('top', ''))
+                        row.append(offset.get('left', ''))
+
+                        size = properties.get('size', {})
+
+                        row.append(size.get('width', ''))
+                        row.append(size.get('height', ''))
+
+                        row.append(properties.get('url*', properties.get('url!', '')))
+                        row.append(properties.get('page-title*', properties.get('page-title!', '')))
+                        row.append(remove_newlines(properties.get('element-content*', properties.get('element-content!', ''))))
+
+                        writer.writerow(row)
+
+                    points_index += 10000
+
+                    outfile.flush()
+
 
     return filename

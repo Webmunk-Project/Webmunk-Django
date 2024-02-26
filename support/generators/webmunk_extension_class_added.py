@@ -4,8 +4,10 @@ import csv
 import datetime
 import gc
 import io
+import logging
 import os
 import tempfile
+import traceback
 
 import pytz
 
@@ -24,7 +26,7 @@ def extract_secondary_identifier(properties):
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Webmunk: Class Added Event'
 
-def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-statements
     filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
 
     with io.open(filename, 'w', encoding='utf-8') as outfile:
@@ -50,70 +52,96 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
         for source in sorted(sources): # pylint: disable=too-many-nested-blocks
             data_source = DataSource.objects.filter(identifier=source).first()
 
-            if data_source is not None and data_source.server is None:
-                gc.collect()
+            try:
+                if data_source is not None and data_source.server is None:
+                    logging.debug('[%s]', source)
 
-                source_ref = DataSourceReference.reference_for_source(source)
+                    gc.collect()
 
-                if data_end is not None and data_start is not None:
-                    if (data_end - data_start).days < 1:
-                        data_start = data_end - datetime.timedelta(days=1)
+                    source_ref = DataSourceReference.reference_for_source(source)
 
-                date_sort = '-created'
+                    if data_end is not None and data_start is not None:
+                        if (data_end - data_start).days < 1:
+                            data_start = data_end - datetime.timedelta(days=1)
 
-                points = DataPoint.objects.filter(source_reference=source_ref, generator_definition=action_reference)
+                    date_sort = '-created'
 
-                if date_type == 'created':
-                    if data_start is not None:
-                        points = points.filter(created__gte=data_start)
+                    points = DataPoint.objects.filter(source_reference=source_ref, generator_definition=action_reference)
 
-                    if data_end is not None:
-                        points = points.filter(created__lte=data_end)
+                    if date_type == 'created':
+                        if data_start is not None:
+                            points = points.filter(created__gte=data_start)
 
-                if date_type == 'recorded':
-                    if data_start is not None:
-                        points = points.filter(recorded__gte=data_start)
+                        if data_end is not None:
+                            points = points.filter(created__lte=data_end)
 
-                    if data_end is not None:
-                        points = points.filter(recorded__lte=data_end)
+                    if date_type == 'recorded':
+                        if data_start is not None:
+                            points = points.filter(recorded__gte=data_start)
 
-                    date_sort = '-recorded'
+                        if data_end is not None:
+                            points = points.filter(recorded__lte=data_end)
 
-                points = points.order_by(date_sort)
+                        date_sort = '-recorded'
 
-                for point in points:
-                    properties = point.fetch_properties()
+                    # points = points.order_by(date_sort)
 
-                    row = []
+                    logging.debug('[%s] Fetching point PKs...', source)
 
-                    row.append(point.source)
+                    point_pks = list(points.values_list('pk', date_sort.replace('-', '')))
 
-                    tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
+                    point_pks.sort(key=lambda pair: pair[1], reverse=True)
 
-                    here_tz = pytz.timezone(tz_str)
+                    points_count = len(point_pks)
 
-                    created = point.created.astimezone(here_tz)
-                    recorded = point.recorded.astimezone(here_tz)
+                    logging.debug('[%s] %d PKs fetched.', source, points_count)
 
-                    row.append(created.isoformat())
-                    row.append(recorded.isoformat())
+                    points_index = 0
 
-                    row.append(tz_str)
+                    while points_index < points_count:
+                        logging.debug('[%s] %s/%s', source, points_index, points_count)
 
-                    here_tz = pytz.timezone(tz_str)
+                        for point_pk in point_pks[points_index:(points_index + 10000)]:
+                            point = DataPoint.objects.get(pk=point_pk[0])
 
-                    row.append(properties.get('tab-id', ''))
-                    row.append(properties.get('page-id', ''))
+                            properties = point.fetch_properties()
 
-                    here_tz = pytz.timezone(tz_str)
+                            row = []
 
-                    row.append(properties.get('url*', properties.get('url!', '')))
-                    row.append(properties.get('page-title*', properties.get('page-title!', '')))
+                            row.append(point.source)
 
-                    row.append(properties.get('class-name', ''))
+                            tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
 
-                    row.append(remove_newlines(properties.get('element-content*', properties.get('element-content!', ''))))
+                            here_tz = pytz.timezone(tz_str)
 
-                    writer.writerow(row)
+                            created = point.created.astimezone(here_tz)
+                            recorded = point.recorded.astimezone(here_tz)
+
+                            row.append(created.isoformat())
+                            row.append(recorded.isoformat())
+
+                            row.append(tz_str)
+
+                            here_tz = pytz.timezone(tz_str)
+
+                            row.append(properties.get('tab-id', ''))
+                            row.append(properties.get('page-id', ''))
+
+                            here_tz = pytz.timezone(tz_str)
+
+                            row.append(properties.get('url*', properties.get('url!', '')))
+                            row.append(properties.get('page-title*', properties.get('page-title!', '')))
+
+                            row.append(properties.get('class-name', ''))
+
+                            row.append(remove_newlines(properties.get('element-content*', properties.get('element-content!', ''))))
+
+                            writer.writerow(row)
+
+                        points_index += 10000
+
+                        outfile.flush()
+            except:
+                traceback.print_exc()
 
     return filename

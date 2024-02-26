@@ -4,6 +4,7 @@ import csv
 import datetime
 import gc
 import io
+import logging
 import os
 import tempfile
 
@@ -16,7 +17,7 @@ from passive_data_kit.models import DataPoint, DataSource, DataGeneratorDefiniti
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Webmunk: Page Scrolls'
 
-def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-statements
     filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
 
     scroll_reference = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-scroll-position')
@@ -73,39 +74,64 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     date_sort = '-recorded'
 
-                points = points.order_by(date_sort)
+                # points = points.order_by(date_sort)
 
-                for point in points:
-                    properties = point.fetch_properties()
+                # point_pks = points.values_list('pk', flat=True)
 
-                    row = []
+                # points_count = len(point_pks)
 
-                    row.append(point.source)
+                logging.debug('[%s] Fetching point PKs...', source)
 
-                    tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
+                point_pks = list(points.values_list('pk', date_sort.replace('-', '')))
 
-                    here_tz = pytz.timezone(tz_str)
+                point_pks.sort(key=lambda pair: pair[1], reverse=True)
 
-                    created = point.created.astimezone(here_tz)
-                    recorded = point.recorded.astimezone(here_tz)
+                points_count = len(point_pks)
 
-                    row.append(created.isoformat())
-                    row.append(recorded.isoformat())
+                logging.debug('[%s] %d PKs fetched.', source, points_count)
 
-                    row.append(tz_str)
+                points_index = 0
 
-                    row.append(properties.get('tab-id', ''))
-                    row.append(properties.get('page-id', ''))
+                while points_index < points_count:
+                    logging.debug('[%s] %s/%s', source, points_index, points_count)
 
-                    here_tz = pytz.timezone(tz_str)
+                    for point_pk in point_pks[points_index:(points_index + 10000)]:
+                        point = DataPoint.objects.get(pk=point_pk[0])
 
-                    row.append(properties.get('top', ''))
-                    row.append(properties.get('left', ''))
-                    row.append(properties.get('width', ''))
-                    row.append(properties.get('height', ''))
-                    row.append(properties.get('url*', properties.get('url!', '')))
-                    row.append(properties.get('page-title*', properties.get('page-title!', '')))
+                        properties = point.fetch_properties()
 
-                    writer.writerow(row)
+                        row = []
+
+                        row.append(point.source)
+
+                        tz_str = properties['passive-data-metadata'].get('timezone', settings.TIME_ZONE)
+
+                        here_tz = pytz.timezone(tz_str)
+
+                        created = point.created.astimezone(here_tz)
+                        recorded = point.recorded.astimezone(here_tz)
+
+                        row.append(created.isoformat())
+                        row.append(recorded.isoformat())
+
+                        row.append(tz_str)
+
+                        row.append(properties.get('tab-id', ''))
+                        row.append(properties.get('page-id', ''))
+
+                        here_tz = pytz.timezone(tz_str)
+
+                        row.append(properties.get('top', ''))
+                        row.append(properties.get('left', ''))
+                        row.append(properties.get('width', ''))
+                        row.append(properties.get('height', ''))
+                        row.append(properties.get('url*', properties.get('url!', '')))
+                        row.append(properties.get('page-title*', properties.get('page-title!', '')))
+
+                        writer.writerow(row)
+
+                    points_index += 10000
+
+                    outfile.flush()
 
     return filename

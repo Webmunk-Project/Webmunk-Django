@@ -94,6 +94,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "null": {
+            "class": "logging.NullHandler",
+        },
+    },
+    "loggers": {
+        "django.security.DisallowedHost": {
+            "handlers": ["null"],
+            "propagate": False,
+        },
+    },
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
@@ -123,9 +138,10 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_SSL_REDIRECT = True
 
+
 DATA_UPLOAD_MAX_MEMORY_SIZE = None # 256 * 1024 * 1024
 
-SILENCED_SYSTEM_CHECKS = ['fields.W904']
+SILENCED_SYSTEM_CHECKS = ['fields.W904', 'security.W004']
 
 PDK_EXTRA_GENERATORS = (
     ('webmunk-visibility-export', 'Webmunk: Element Hide & Show Events',),

@@ -4,7 +4,6 @@ import csv
 import datetime
 import gc
 import io
-import logging
 import os
 import tempfile
 
@@ -16,18 +15,13 @@ from passive_data_kit.models import DataPoint, DataSource, DataGeneratorDefiniti
 
 
 def extract_secondary_identifier(properties):
-    if 'rule' in properties:
-        return properties['rule']
-
-    return None
+    return properties.get('order-number', None)
 
 def generator_name(identifier): # pylint: disable=unused-argument
-    return 'Webmunk: Rule Matches'
+    return 'Webmunk: Amazon Order Items'
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-statements
     filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
-
-    match_reference = DataGeneratorDefinition.definition_for_identifier('webmunk-extension-matched-rule')
 
     with io.open(filename, 'w', encoding='utf-8') as outfile:
         writer = csv.writer(outfile, delimiter='\t')
@@ -35,17 +29,30 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
         columns = [
             'Source',
             'Date Created',
+            'Date Created UTC',
             'Date Recorded',
+            'Date Recorded UTC',
             'Time Zone',
-            'Tab ID',
-            'Page ID',
-            'Rule',
-            'Count',
-            'URL',
-            'Page Title',
+            'Order Number',
+            'Order Date',
+            'Item ASIN',
+            'Item Title',
+            'Item Seller',
+            'Item Condition',
+            'Item Price',
+            'Item URL',
+            'Order Subtotal',
+            'Order Pretax Total',
+            'Order Tax',
+            'Order Shipping',
+            'Order Total',
+            'Destination',
+            'Delivery Date',
         ]
 
         writer.writerow(columns)
+
+        order_reference = DataGeneratorDefinition.definition_for_identifier('webmunk-amazon-order')
 
         for source in sorted(sources): # pylint: disable=too-many-nested-blocks
             data_source = DataSource.objects.filter(identifier=source).first()
@@ -61,7 +68,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                 date_sort = '-created'
 
-                points = DataPoint.objects.filter(source_reference=source_ref, generator_definition=match_reference)
+                points = DataPoint.objects.filter(source_reference=source_ref, generator_definition=order_reference)
 
                 if date_type == 'created':
                     if data_start is not None:
@@ -79,32 +86,12 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     date_sort = '-recorded'
 
-                # points = points.order_by(date_sort)
+                points = points.order_by(date_sort)
 
-                # point_pks = points.values_list('pk', flat=True)
+                for point in points:
+                    properties = point.fetch_properties()
 
-                # points_count = len(point_pks)
-
-                logging.debug('[%s] Fetching point PKs...', source)
-
-                point_pks = list(points.values_list('pk', date_sort.replace('-', '')))
-
-                point_pks.sort(key=lambda pair: pair[1], reverse=True)
-
-                points_count = len(point_pks)
-
-                logging.debug('[%s] %d PKs fetched.', source, points_count)
-
-                points_index = 0
-
-                while points_index < points_count:
-                    logging.debug('[%s] %s/%s', source, points_index, points_count)
-
-                    for point_pk in point_pks[points_index:(points_index + 10000)]:
-                        point = DataPoint.objects.get(pk=point_pk[0])
-
-                        properties = point.fetch_properties()
-
+                    for item in properties.get('items', []):
                         row = []
 
                         row.append(point.source)
@@ -117,24 +104,32 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                         recorded = point.recorded.astimezone(here_tz)
 
                         row.append(created.isoformat())
+                        row.append(created.astimezone(pytz.utc).isoformat())
                         row.append(recorded.isoformat())
+                        row.append(recorded.astimezone(pytz.utc).isoformat())
 
                         row.append(tz_str)
 
                         here_tz = pytz.timezone(tz_str)
 
-                        row.append(properties.get('tab-id', ''))
-                        row.append(properties.get('page-id', ''))
+                        row.append(properties.get('order-number', ''))
+                        row.append(properties.get('order-date', '').split('T')[0])
 
-                        row.append(properties.get('rule', ''))
-                        row.append(properties.get('count', -1))
-                        row.append(properties.get('url*', properties.get('url!', '')))
-                        row.append(properties.get('page-title*', properties.get('page-title!', '')))
+                        row.append(item.get('asin', ''))
+                        row.append(item.get('title', ''))
+                        row.append(item.get('seller', ''))
+                        row.append(item.get('condition', ''))
+                        row.append(item.get('price', ''))
+                        row.append(item.get('url', ''))
+
+                        row.append(properties.get('order-subtotal', ''))
+                        row.append(properties.get('order-pretax-total', ''))
+                        row.append(properties.get('order-tax', properties.get('order-Tax', '')))
+                        row.append(properties.get('order-shipping', ''))
+                        row.append(properties.get('order-total', ''))
+                        row.append(properties.get('order-destination', ''))
+                        row.append(properties.get('order-delivered', ''))
 
                         writer.writerow(row)
-
-                    points_index += 10000
-
-                    outfile.flush()
 
     return filename
