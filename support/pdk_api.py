@@ -129,16 +129,28 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                             date_sort = '-recorded'
 
-                        points = points.order_by(date_sort)
+                        logging.debug('[%s] Fetching point PKs...', source)
 
-                        points_count = points.count()
+                        point_pks = list(points.values_list('pk', date_sort.replace('-', '')))
+
+                        point_pks.sort(key=lambda pair: pair[1], reverse=True)
+
+                        points_count = len(point_pks)
+
+                        logging.debug('[%s] %d PKs fetched.', source, points_count)
+
+                        # points = points.order_by(date_sort)
+
+                        # points_count = points.count()
 
                         points_index = 0
 
                         while points_index < points_count:
                             logging.debug('[%s] %s/%s', source, points_index, points_count)
 
-                            for point in points[points_index:(points_index + 10000)]:
+                            for point_pk in point_pks[points_index:(points_index + 10000)]:
+                                point = DataPoint.objects.get(pk=point_pk[0])
+
                                 properties = point.fetch_properties()
 
                                 row = []
