@@ -152,5 +152,7 @@ FILE_UPLOAD_PERMISSIONS = 0o666
 
 from .local_settings import *
 
+PDK_DISABLE_DATA_UPLOAD = True
+
 for app in ADDITIONAL_APPS:
     INSTALLED_APPS.append(app)
