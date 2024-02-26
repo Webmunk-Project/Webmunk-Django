@@ -76,7 +76,7 @@ class Command(BaseCommand):
 
             point = DataPoint.objects.filter(pk=count_index).only('generator_identifier', 'source', 'created', 'pk', 'properties').first()
 
-            if point is not None:
+            if point is not None and point.generator_identifier != 'pdk-system-status':
                 upload_path = '%s/%s/%s/%s-%s.json' % (settings.ALLOWED_HOSTS[0], point.source, point.created.date().isoformat(), point.generator_identifier, point.pk)
                 contents = json.dumps(point.properties, indent=2).encode('utf-8')
 
@@ -89,6 +89,9 @@ class Command(BaseCommand):
                     result.get()
 
                 async_results = []
+
+        for result in async_results:
+            result.get()
 
         pool.close()
 
