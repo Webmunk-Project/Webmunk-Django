@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-member,line-too-long
 
-import datetime
 import json
 import logging
 import os
-import re
 
 from multiprocessing.pool import ThreadPool
 
@@ -16,26 +14,24 @@ from botocore.config import Config
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
-from django.db.models import Q
 from django.utils import timezone
 
-from passive_data_kit.decorators import handle_lock
-from passive_data_kit.models import DataPoint, DataGeneratorDefinition
+from passive_data_kit.models import DataPoint
 
 def upload_point(client, upload_path, contents, s3_bucket):
     client.put_object(Body=contents, Bucket=s3_bucket, Key=upload_path)
 
     return None
 
-
 class Command(BaseCommand):
     help = 'Pushes raw data points to Amazon S3'
 
     def add_arguments(self, parser):
         parser.add_argument('username')
-        parser.add_argument('--start_pk', type=int)
+        parser.add_argument('--start-pk', type=int, default=0)
+        parser.add_argument('--end-pk', type=int, default=-1)
 
-    @handle_lock
+    # @handle_lock
     def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-locals, too-many-statements
         upload_user = get_user_model().objects.get(username=options['username'])
 
@@ -62,15 +58,24 @@ class Command(BaseCommand):
 
         last_pk = last_point.pk
 
-        logging.info('Fetched %s.' % last_pk)
+        logging.info('Fetched %s.', last_pk)
 
-        count_index = 0
+        count_index = options['start_pk']
+        count_index_end = options['end_pk']
+
+        if count_index_end < 0:
+            count_index_end = last_pk
+
+        if count_index_end > last_pk + 1:
+            count_index_end = last_pk
 
         pool = ThreadPool(processes=25)
 
         async_results = []
 
-        while count_index <= last_pk:
+        sys.stdout.flush()
+
+        while count_index <= count_index_end:
             if (count_index % 1000) == 0:
                 logging.info('[%s] %s / %s', timezone.now(), count_index, last_pk)
 
