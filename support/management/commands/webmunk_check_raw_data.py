@@ -30,6 +30,7 @@ class Command(BaseCommand):
     # @handle_lock
     def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-locals, too-many-statements
         verbosity = options.get('verbosity', 0)
+
         if verbosity == 0:
             level = logging.ERROR
         elif verbosity == 1:
@@ -71,7 +72,7 @@ class Command(BaseCommand):
         count_index = 0
 
         while True:
-            point_pk = random.randrange(last_pk)
+            point_pk = random.randrange(last_pk) # nosec
 
             point = DataPoint.objects.filter(pk=point_pk).only('generator_identifier', 'source', 'created', 'pk', 'properties').first()
 
