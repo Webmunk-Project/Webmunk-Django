@@ -4,9 +4,8 @@
 import json
 import logging
 import os
-import sys
-
-from multiprocessing.pool import ThreadPool
+import random
+import time
 
 import boto3
 
@@ -27,13 +26,10 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('username')
-        parser.add_argument('--start-pk', type=int, default=0)
-        parser.add_argument('--end-pk', type=int, default=-1)
 
     # @handle_lock
     def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-locals, too-many-statements
         verbosity = options.get('verbosity', 0)
-
         if verbosity == 0:
             level = logging.ERROR
         elif verbosity == 1:
@@ -72,44 +68,28 @@ class Command(BaseCommand):
 
         logging.info('Fetched %s.', last_pk)
 
-        count_index = options['start_pk']
-        count_index_end = options['end_pk']
+        count_index = 0
 
-        if count_index_end < 0:
-            count_index_end = last_pk
+        while True:
+            point_pk = random.randrange(last_pk)
 
-        if count_index_end > last_pk + 1:
-            count_index_end = last_pk
+            point = DataPoint.objects.filter(pk=point_pk).only('generator_identifier', 'source', 'created', 'pk', 'properties').first()
 
-        pool = ThreadPool(processes=25)
-
-        async_results = []
-
-        sys.stdout.flush()
-
-        while count_index <= count_index_end:
-            if (count_index % 1000) == 0:
-                logging.info('[%s] %s / %s', timezone.now(), count_index, last_pk)
-
-            point = DataPoint.objects.filter(pk=count_index).only('generator_identifier', 'source', 'created', 'pk', 'properties').first()
+            if (count_index % 100) == 0:
+                logging.info('[%s - %s] %s / %s', timezone.now(), point_pk, count_index, last_pk)
 
             if point is not None and point.generator_identifier != 'pdk-system-status':
                 upload_path = '%s/%s/%s/%s-%s.json' % (settings.ALLOWED_HOSTS[0], point.source, point.created.date().isoformat(), point.generator_identifier, point.pk)
-                contents = json.dumps(point.properties, indent=2).encode('utf-8')
 
-                async_results.append(pool.apply_async(upload_point, [client, upload_path, contents, s3_bucket]))
+                response = client.get_object(Bucket=s3_bucket, Key=upload_path)
+
+                obj_str = response['Body'].read().decode('utf-8')
+
+                obj_dict = json.loads(obj_str)
+
+                if obj_dict != point.properties:
+                    logging.info('%s[%s]: %s', upload_path, point_pk, obj_str)
 
             count_index += 1
 
-            if len(async_results) >= 100:
-                for result in async_results:
-                    result.get()
-
-                async_results = []
-
-        for result in async_results:
-            result.get()
-
-        pool.close()
-
-        pool.join()
+            time.sleep(1)
