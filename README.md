@@ -2,39 +2,39 @@
 
 This repository contains the *data collection server component* used in Webmunk projects.
 
-*Webmunk* is a platform conducting browser-based research studies that allow investigators to passively gather user bahavior on the web, as well as implement interventions that change participants' web experience to test research hypotheses.
+*Webmunk* is a platform conducting browser-based research studies that allows investigators to passively gather user behavior on the web, as well as implement interventions that change participants' web experience to test research hypotheses.
 
 Full Webmunk deployments consist of three main technical components:
 
-* A web browser extension that the installs in their local browser.  ([Webmunk-Extension](https://github.com/Webmunk-Project/Webmunk-Extension))
-* An enrollment server that manages participant sign-ups and assignments to experimental arms or configurations. ([Webmunk-Enrollment-App](https://github.com/Webmunk-Project/Webmunk-Enrollment-App))
+* A web browser extension that installs on the participant's local browser.  ([Webmunk-Extension](https://github.com/Webmunk-Project/Webmunk-Extension))
+* An enrollment server that manages participant sign-ups, assignments to experimental arms or configurations, and communicates with the data collection server or servers. ([Webmunk-Enrollment-App](https://github.com/Webmunk-Project/Webmunk-Enrollment-App))
 * A data collection server that receives de-identified data from Webmunk extensions and provides tools for monitoring and exporting the gathered observations.
 
-This repository contains this last component in the Webmunk architecture. For more information and specifics about the other components, visit the respective repositories linked above.
+This repository contains this last component in the Webmunk architecture, which is likely the first one you will install when you set up your first Webmunk project. For more information and specifics about the other components, visit the respective repositories linked above.
 
 
 ## Data Collection Server Design
 
-The Webmunk data collection server (DCS) is designed to receive de-identitified data from Webmunk browser extensions in order to separate study data from personally-identifiable information in the interests of overall information security and preserving participant privacy.
+The Webmunk data collection server (DCS) is designed to receive de-identified data from Webmunk browser extensions to separate study data from personally-identifiable information in the interests of overall information security and preserving participant privacy.
 
-When a partipant begins a Webmunk study, their browser extension may request personal information to identify the participant, and the enrollment server either creates a new random identifier for the participant or retrieves an existing one if the participant has already enrolled. (This allows participants to reinstall a Webmunk extension and continue participating, as well as participate across devices by installing the extension on all of their web browsing devices.)
+When a participant begins a Webmunk study, their browser extension may request personal information to identify the participant, and the enrollment server either creates a new random identifier for the participant or retrieves an existing one if the participant has already enrolled. (This allows participants to reinstall a Webmunk extension and continue participating, or to participate across devices by installing the extension on all of their web browsing devices.)
 
 When the extension transmits data to the DCS, only the participant identifier is sent to identify the source of the transmission - the extension itself discards the personal information used for lookup as soon as it retrieves a participant identifier.
 
-The DCS is built on [the Passive Data Kit Django platform](https://github.com/audacious-software/PassiveDataKit-Django/) (PDK) in order to leverage the existing data collection and processing infrastructure that has been deployed across observational and experimental studies for almost a decade. Investigators seeking to deploy Webmunk for their own studies are **strongly** encouraged to review the PDK documentation and [the Django web application framework](https://www.djangoproject.com/start/) used by PDK. The Webmunk DCS builds heavily on both platforms and uses conventions, techniques, and tools native to both.
-
+The DCS is built on [the Passive Data Kit Django platform](https://github.com/audacious-software/PassiveDataKit-Django/) (PDK) to use existing data collection and processing infrastructure that has powered observational and experimental studies for many years. Investigative teams seeking to deploy Webmunk for their studies are **strongly** encouraged to review the PDK documentation and [the Django web application framework](https://www.djangoproject.com/start/) used by PDK. The Webmunk DCS builds heavily on both platforms and uses conventions, techniques, and tools native to both.
 
 ## Prerequisites
 
-The DCS has been developed primarily on Unix-like platforms and assumes the existence of tools such as CRON ob scheduling and the Apache web server. DCS instances expose publicly-facing web interfaces for management and data collection, so a server with a publicly-addressable IP address (or suitable web application firewall that forwards traffic to the DCS) is required. 
+A Unix-like OS with access to root/sudo: 
+* CRON
+* Python 3.6+
+* Apache2 web server with [mod_wsgi](https://modwsgi.readthedocs.io/)
+* A domain name with an SSL certificate that is pointed to a publicly-addressable IP address (or suitable web application firewall that forwards traffic to the DCS)
+* Postgres database 9.5+ with PostGIS extensions
 
-The DCS targets currently-supportred LTS releases of Django (3.2.X, 4.2.X). It requires Python 3.6 and newer.
+Typically, the bundled Apache server and mod_wsgi module that comes with your Unix distribution will support Django.
 
-In addition to Django, the DCS relies extensively on the Postgres database support included with Django, including the PostGIS extensions needed to enable spatial data types within Postgres. The DCS requires Postgres 9.5 and newer.
-
-To make your DCS server accessible to outside Webmunk clients, we typically configure Django with the Apache 2 webserver, using [mod_wsgi](https://modwsgi.readthedocs.io/) to facilitate communication between the front-end Apache web server and the Python application server. Typically, the bundled Apache server and mod_wsgi module that comes with your Unix distribution is more than sufficient to support Django.
-
-The DCS server assumes that local users are able to set up and run CRON jobs. In addition to the standard background jobs provided by PDK ([more details here](https://github.com/audacious-software/PassiveDataKit-Django/#background-jobs-setup)), the DCS adds several additional jobs for tasks such as extracting Amazon ASIN identifiers from the data sent by browsers and generating nightly data export jobs that bundle the past day's data collection into a form suitable for study monitoring and analysis.
+In addition to the standard background jobs provided by PDK ([more details here](https://github.com/audacious-software/PassiveDataKit-Django/#background-jobs-setup)), the DCS adds several additional jobs for tasks such as extracting Amazon ASIN identifiers from the data sent by browsers and generating nightly data export jobs that bundle the past day's data collection into a form suitable for study monitoring and analysis.
 
 *Note that many of these tasks (such as compiling a large data report) will often run longer than the typical request timeout window web servers or clients will tolerate, so chaining these requests to HTTP endpoints that are triggered by an outside polling service **will not** be sufficient for these purposes as a CRON substitute.*
 
