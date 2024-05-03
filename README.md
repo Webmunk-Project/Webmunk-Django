@@ -66,7 +66,7 @@ In addition to the standard background jobs provided by PDK ([more details here]
      sudo apachectl -M | grep wsgi
      ```
 
-1. **(Strongly Recommended)** Before installing the DCS, [create a Python virtual environment](https://docs.python.org/3/library/venv.html) that will contain the local Python environment and all of the relevant dependencies separate from your host platform's own Python installation. *Do not put this virtual environment in your home directory, which is not accessible to Apache*, a suggestion is to create a directory such as `/var/www/venvs/webmunk` to put it in. Don't forget to activate your virtual environment before continuing! e.g. `source /var/www/venvs/webmunk/myenv/`
+1. **(Strongly Recommended)** Before installing the DCS, [create a Python virtual environment](https://docs.python.org/3/library/venv.html) that will contain the local Python environment and all of the relevant dependencies separate from your host platform's own Python installation. *Do not put this virtual environment in your home directory, which is not accessible to Apache*, a suggestion is to create a directory such as `/var/www/venvs/dcs` to put it in. then create it once you are in the appropriate directory `python3 -m venv myvenv`  Don't forget to activate your virtual environment before continuing (and every time you make changes)! e.g. `source /var/www/venvs/dcs/myvenv/bin/activate`
 
 2. Clone this repository to a suitable location on your server:
 
@@ -133,7 +133,8 @@ In addition to the standard background jobs provided by PDK ([more details here]
 
     ```$ ./manage.py createsuperuser```
 
-7. Next, [configure your local Apache HTTP server](https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/modwsgi/) to connect to Django.
+7. If  you are not familiar with setting up an Apache2 website, see [this basic tutorial](https://ubuntu.com/tutorials/install-and-configure-apache#1-overview), if you are not using Ubuntu, there are similar tutorials for different Linux distributions. Make sure Apache is running properly by using `systemctl status apache2`
+8. Next, [configure your local Apache HTTP server](https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/modwsgi/) to connect to Django.
 
     Your must configure Django to be served over HTTPS ([obtain a Let's Encrypt certificate if needed](https://letsencrypt.org/)) and to forward any unencrypted HTTP requests to the HTTPS port using a `VirtualHost` definition like:
 
@@ -146,7 +147,26 @@ In addition to the standard background jobs provided by PDK ([more details here]
     </VirtualHost>
     ````
 
-8. Once Apache is configured and running, login to the Django administrative backend using the user credentials created above: 
+9. Change the postgres configuration to allow for password-based access by Django:
+```
+sudo nano /etc/postgresql/14/main/pg_hba.conf
+```
+
+Change the line from something like this:
+```
+# TYPE DATABASE USER ADDRESS METHOD 
+local all all peer
+```
+to:
+```
+# TYPE DATABASE USER ADDRESS METHOD 
+local all all md5
+```
+Then restart postgres
+```
+sudo systemctl restart postgresql
+```
+10. Once Apache is configured and running, login to the Django administrative backend using the user credentials created above: 
 
     `https://myserver.example.com/admin/` (Replace `myserver.example.com` with your own host's name.) 
     
