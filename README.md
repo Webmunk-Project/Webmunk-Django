@@ -41,9 +41,32 @@ In addition to the standard background jobs provided by PDK ([more details here]
 
 ## Installation
 
-If you are operating in an environment that fulfills all of the requirements above, the first step to get started is to install the Django web application framework with Postgres and PostGIS enabled by cloning repository:
+1. Verify that your system meets the requirements above and install any needed components. *This example provides commands for a Debian-Ubuntu based OS*. Any Linux-based OS will be conceptually similar, but will require different syntax.
+   * Make sure you have sudo access `sudo echo "Sudo access confirmed"`
+   * Verify your public IP or Domain: `curl ifconfig.me`
+   * Update your OS package manager, e.g. `sudo apt update`
+   * Verify Cron access `sudo systemctl status cron`
+   * Check your Python version `python3 --version`
+   * The following are basic utilities you will need that may not be included in a fresh installation.
+     ```
+     sudo apt install python3-pip
+     sudo apt-get install dialog
+     sudo apt-get install apt-utils
+     sudo apt install git
+     sudo apt install python3-venv
+     ```
+   * Verify that you have Postgres 9.5+ and the PostGIS extension (this extension is needed to setup Webmunk, whether or not you plan to collect geographic information).
+     ```
+     psql --version
+     sudo -u postgres psql -c "SELECT PostGIS_Version();" # change postgres to your database user if different
+     ```
+   * Verify that you have Apache2 with [mod_wsgi](https://modwsgi.readthedocs.io/)
+     ```
+     apache2 -v
+     sudo apachectl -M | grep wsgi
+     ```
 
-1. **(Strongly Recommended)** Before installing the DCS, [create a Python virtual environment](https://docs.python.org/3/library/venv.html) that will contain the local Python environment and all of the relevant dependencies separate from your host platform's own Python installation. Don't forget to activate your virtual environment before continuing!
+1. **(Strongly Recommended)** Before installing the DCS, [create a Python virtual environment](https://docs.python.org/3/library/venv.html) that will contain the local Python environment and all of the relevant dependencies separate from your host platform's own Python installation. *Do not put this virtual environment in your home directory, which is not accessible to Apache*, a suggestion is to create a directory such as `/var/www/venvs/webmunk` to put it in. Don't forget to activate your virtual environment before continuing! e.g. `source /var/www/venvs/webmunk/myenv/`
 
 2. Clone this repository to a suitable location on your server:
 
@@ -74,7 +97,7 @@ If you are operating in an environment that fulfills all of the requirements abo
     After the database has been created, enable the PostGIS extension:
 
     ```
-    $ psql webmunk_study
+    $ psql webmunk_data
     postgres=# CREATE EXTENSION postgis;
     postgres=# exit
     ```
@@ -112,7 +135,7 @@ If you are operating in an environment that fulfills all of the requirements abo
 
 7. Next, [configure your local Apache HTTP server](https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/modwsgi/) to connect to Django.
 
-    We **strongly recommend** that your configure Django to be served over HTTPS ([obtain a Let's Encrypt certificate if needed](https://letsencrypt.org/)) and to forward any unencrypted HTTP requests to the HTTPS port using a `VirtualHost` definition like:
+    Your must configure Django to be served over HTTPS ([obtain a Let's Encrypt certificate if needed](https://letsencrypt.org/)) and to forward any unencrypted HTTP requests to the HTTPS port using a `VirtualHost` definition like:
 
     ````
     <VirtualHost *:80>
