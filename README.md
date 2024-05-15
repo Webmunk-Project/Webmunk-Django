@@ -2,48 +2,71 @@
 
 This repository contains the *data collection server component* used in Webmunk projects.
 
-*Webmunk* is a platform conducting browser-based research studies that allow investigators to passively gather user bahavior on the web, as well as implement interventions that change participants' web experience to test research hypotheses.
+*Webmunk* is a platform conducting browser-based research studies that allows investigators to passively gather user behavior on the web, as well as implement interventions that change participants' web experience to test research hypotheses.
 
 Full Webmunk deployments consist of three main technical components:
 
-* A web browser extension that the installs in their local browser.  ([Webmunk-Extension](https://github.com/Webmunk-Project/Webmunk-Extension))
-* An enrollment server that manages participant sign-ups and assignments to experimental arms or configurations. ([Webmunk-Enrollment-App](https://github.com/Webmunk-Project/Webmunk-Enrollment-App))
+* A web browser extension that installs on the participant's local browser.  ([Webmunk-Extension](https://github.com/Webmunk-Project/Webmunk-Extension))
+* An enrollment server that manages participant sign-ups, assignments to experimental arms or configurations, and communicates with the data collection server or servers. ([Webmunk-Enrollment-App](https://github.com/Webmunk-Project/Webmunk-Enrollment-App))
 * A data collection server that receives de-identified data from Webmunk extensions and provides tools for monitoring and exporting the gathered observations.
 
-This repository contains this last component in the Webmunk architecture. For more information and specifics about the other components, visit the respective repositories linked above.
+This repository contains this last component in the Webmunk architecture, which is likely the first one you will install when you set up your first Webmunk project. For more information and specifics about the other components, visit the respective repositories linked above.
 
 
 ## Data Collection Server Design
 
-The Webmunk data collection server (DCS) is designed to receive de-identitified data from Webmunk browser extensions in order to separate study data from personally-identifiable information in the interests of overall information security and preserving participant privacy.
+The Webmunk data collection server (DCS) is designed to receive de-identified data from Webmunk browser extensions to separate study data from personally-identifiable information in the interests of overall information security and preserving participant privacy.
 
-When a partipant begins a Webmunk study, their browser extension may request personal information to identify the participant, and the enrollment server either creates a new random identifier for the participant or retrieves an existing one if the participant has already enrolled. (This allows participants to reinstall a Webmunk extension and continue participating, as well as participate across devices by installing the extension on all of their web browsing devices.)
+When a participant begins a Webmunk study, their browser extension may request personal information to identify the participant, and the enrollment server either creates a new random identifier for the participant or retrieves an existing one if the participant has already enrolled. (This allows participants to reinstall a Webmunk extension and continue participating, or to participate across devices by installing the extension on all of their web browsing devices.)
 
 When the extension transmits data to the DCS, only the participant identifier is sent to identify the source of the transmission - the extension itself discards the personal information used for lookup as soon as it retrieves a participant identifier.
 
-The DCS is built on [the Passive Data Kit Django platform](https://github.com/audacious-software/PassiveDataKit-Django/) (PDK) in order to leverage the existing data collection and processing infrastructure that has been deployed across observational and experimental studies for almost a decade. Investigators seeking to deploy Webmunk for their own studies are **strongly** encouraged to review the PDK documentation and [the Django web application framework](https://www.djangoproject.com/start/) used by PDK. The Webmunk DCS builds heavily on both platforms and uses conventions, techniques, and tools native to both.
-
+The DCS is built on [the Passive Data Kit Django platform](https://github.com/audacious-software/PassiveDataKit-Django/) (PDK) to use existing data collection and processing infrastructure that has powered observational and experimental studies for many years. Investigative teams seeking to deploy Webmunk for their studies are **strongly** encouraged to review the PDK documentation and [the Django web application framework](https://www.djangoproject.com/start/) used by PDK. The Webmunk DCS builds heavily on both platforms and uses conventions, techniques, and tools native to both.
 
 ## Prerequisites
 
-The DCS has been developed primarily on Unix-like platforms and assumes the existence of tools such as CRON ob scheduling and the Apache web server. DCS instances expose publicly-facing web interfaces for management and data collection, so a server with a publicly-addressable IP address (or suitable web application firewall that forwards traffic to the DCS) is required. 
+A Unix-like OS with access to root/sudo: 
+* CRON
+* Python 3.6+
+* Apache2 web server with [mod_wsgi](https://modwsgi.readthedocs.io/)
+* A domain name with an SSL certificate that is pointed to a publicly-addressable IP address (or suitable web application firewall that forwards traffic to the DCS)
+* Postgres database 9.5+ with PostGIS extensions
 
-The DCS targets currently-supportred LTS releases of Django (3.2.X, 4.2.X). It requires Python 3.6 and newer.
+Typically, the bundled Apache server and mod_wsgi module that comes with your Unix distribution will support Django.
 
-In addition to Django, the DCS relies extensively on the Postgres database support included with Django, including the PostGIS extensions needed to enable spatial data types within Postgres. The DCS requires Postgres 9.5 and newer.
-
-To make your DCS server accessible to outside Webmunk clients, we typically configure Django with the Apache 2 webserver, using [mod_wsgi](https://modwsgi.readthedocs.io/) to facilitate communication between the front-end Apache web server and the Python application server. Typically, the bundled Apache server and mod_wsgi module that comes with your Unix distribution is more than sufficient to support Django.
-
-The DCS server assumes that local users are able to set up and run CRON jobs. In addition to the standard background jobs provided by PDK ([more details here](https://github.com/audacious-software/PassiveDataKit-Django/#background-jobs-setup)), the DCS adds several additional jobs for tasks such as extracting Amazon ASIN identifiers from the data sent by browsers and generating nightly data export jobs that bundle the past day's data collection into a form suitable for study monitoring and analysis.
+In addition to the standard background jobs provided by PDK ([more details here](https://github.com/audacious-software/PassiveDataKit-Django/#background-jobs-setup)), the DCS adds several additional jobs for tasks such as extracting Amazon ASIN identifiers from the data sent by browsers and generating nightly data export jobs that bundle the past day's data collection into a form suitable for study monitoring and analysis.
 
 *Note that many of these tasks (such as compiling a large data report) will often run longer than the typical request timeout window web servers or clients will tolerate, so chaining these requests to HTTP endpoints that are triggered by an outside polling service **will not** be sufficient for these purposes as a CRON substitute.*
 
 
 ## Installation
 
-If you are operating in an environment that fulfills all of the requirements above, the first step to get started is to install the Django web application framework with Postgres and PostGIS enabled by cloning repository:
+1. Verify that your system meets the requirements above and install any needed components. *This example provides commands for a Debian-Ubuntu based OS*. Any Linux-based OS will be conceptually similar, but will require different syntax.
+   * Make sure you have sudo access `sudo echo "Sudo access confirmed"`
+   * Verify your public IP or Domain: `curl ifconfig.me`
+   * Update your OS package manager, e.g. `sudo apt update`
+   * Verify Cron access `sudo systemctl status cron`
+   * Check your Python version `python3 --version`
+   * The following are basic utilities you will need that may not be included in a fresh installation.
+     ```
+     sudo apt install python3-pip
+     sudo apt-get install dialog
+     sudo apt-get install apt-utils
+     sudo apt install git
+     sudo apt install python3-venv
+     ```
+   * Verify that you have Postgres 9.5+ and the PostGIS extension (this extension is needed to setup Webmunk, whether or not you plan to collect geographic information).
+     ```
+     psql --version
+     sudo -u postgres psql -c "SELECT PostGIS_Version();" # change postgres to your database user if different
+     ```
+   * Verify that you have Apache2 with [mod_wsgi](https://modwsgi.readthedocs.io/)
+     ```
+     apache2 -v
+     sudo apachectl -M | grep wsgi
+     ```
 
-1. **(Strongly Recommended)** Before installing the DCS, [create a Python virtual environment](https://docs.python.org/3/library/venv.html) that will contain the local Python environment and all of the relevant dependencies separate from your host platform's own Python installation. Don't forget to activate your virtual environment before continuing!
+1. **(Strongly Recommended)** Before installing the DCS, [create a Python virtual environment](https://docs.python.org/3/library/venv.html) that will contain the local Python environment and all of the relevant dependencies separate from your host platform's own Python installation. *Do not put this virtual environment in your home directory, which is not accessible to Apache*, a suggestion is to create a directory such as `/var/www/venvs/dcs` to put it in. then create it once you are in the appropriate directory `python3 -m venv myvenv`  Don't forget to activate your virtual environment before continuing (and every time you make changes)! e.g. `source /var/www/venvs/dcs/myvenv/bin/activate`
 
 2. Clone this repository to a suitable location on your server:
 
@@ -74,7 +97,7 @@ If you are operating in an environment that fulfills all of the requirements abo
     After the database has been created, enable the PostGIS extension:
 
     ```
-    $ psql webmunk_study
+    $ psql webmunk_data
     postgres=# CREATE EXTENSION postgis;
     postgres=# exit
     ```
@@ -110,9 +133,10 @@ If you are operating in an environment that fulfills all of the requirements abo
 
     ```$ ./manage.py createsuperuser```
 
-7. Next, [configure your local Apache HTTP server](https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/modwsgi/) to connect to Django.
+7. If  you are not familiar with setting up an Apache2 website, see [this basic tutorial](https://ubuntu.com/tutorials/install-and-configure-apache#1-overview), if you are not using Ubuntu, there are similar tutorials for different Linux distributions. Make sure Apache is running properly by using `systemctl status apache2`
+8. Next, [configure your local Apache HTTP server](https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/modwsgi/) to connect to Django.
 
-    We **strongly recommend** that your configure Django to be served over HTTPS ([obtain a Let's Encrypt certificate if needed](https://letsencrypt.org/)) and to forward any unencrypted HTTP requests to the HTTPS port using a `VirtualHost` definition like:
+    Your must configure Django to be served over HTTPS ([obtain a Let's Encrypt certificate if needed](https://letsencrypt.org/)) and to forward any unencrypted HTTP requests to the HTTPS port using a `VirtualHost` definition like:
 
     ````
     <VirtualHost *:80>
@@ -123,7 +147,26 @@ If you are operating in an environment that fulfills all of the requirements abo
     </VirtualHost>
     ````
 
-8. Once Apache is configured and running, login to the Django administrative backend using the user credentials created above: 
+9. Change the postgres configuration to allow for password-based access by Django:
+```
+sudo nano /etc/postgresql/14/main/pg_hba.conf
+```
+
+Change the line from something like this:
+```
+# TYPE DATABASE USER ADDRESS METHOD 
+local all all peer
+```
+to:
+```
+# TYPE DATABASE USER ADDRESS METHOD 
+local all all md5
+```
+Then restart postgres
+```
+sudo systemctl restart postgresql
+```
+10. Once Apache is configured and running, login to the Django administrative backend using the user credentials created above: 
 
     `https://myserver.example.com/admin/` (Replace `myserver.example.com` with your own host's name.) 
     
