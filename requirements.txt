@@ -1,6 +1,6 @@
 # Updated Sep. 4, 2023
 
-keepa==1.3.5
+keepa==1.4.4
 pyOpenSSL==24.0.0
 selenium==4.7.2
 simplejson==3.18.4
